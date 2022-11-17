@@ -48,12 +48,12 @@ if dataset == 'cmu_dataset':
                 
                 if trial in bad_trials[subject]:
                     print('Remove trial {}'.format(trial))
-                    # shutil.rmtree(os.path.join(path_trials, trial))
+                    shutil.rmtree(os.path.join(path_trials, trial))
                     count += 1
                     
         if not os.listdir(path_trials):
             print('Remove subject {}'.format(subject))
-            # shutil.rmtree(os.path.join(path_clean_dataset, subject))
+            shutil.rmtree(os.path.join(path_clean_dataset, subject))
             count1 += 1
             
     print('Removed {} trials'.format(count))
