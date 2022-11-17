@@ -57,4 +57,4 @@ if dataset == 'cmu_dataset':
             count1 += 1
             
     print('Removed {} trials'.format(count))
-    print('Removed {} subjects'.format(count1))                
+    print('Removed {} subjects'.format(count1))

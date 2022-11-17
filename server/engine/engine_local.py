@@ -941,27 +941,28 @@ if __name__ == "__main__":
     
     path_main = os.getcwd()
     path_server = os.path.dirname(path_main)
-    path_data = os.path.join(path_server, 'data', 'cmu_dataset', '06')
+    path_data = os.path.join(path_server, 'data', 'cmu_dataset')
+    dataset = 'cmu_dataset'
+    path_dataset = os.path.join(path_data, dataset)
+    subjects = []
+    for file in os.listdir(path_dataset):
+        try:
+            idx_file = int(file)
+            subjects.append(idx_file)
+        except:
+            pass
+            
+            
+    print(subjects)
+        
+    
+    
+    
     
     marker_set_fixed = ['C7', 'T10', 'CLAV', 'STRN', 'RELB', 'RWRA', 'RWRB',
                         'LELB', 'LWRA', 'LWRB', 'RFWT', 'LFWT', 'RBWT', 'LBWT',
                         'RKNE', 'RANK', 'RHEE', 'RTOE', 'RMT5', 
-                        'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']
+                        'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']    
+    # processLocalSubjectFolder(path_data, marker_set_fixed=marker_set_fixed)
     
-    processLocalSubjectFolder(path_data, marker_set_fixed=marker_set_fixed)
-    
-    test=1
-    
-    # path
-    
-    # path = 
-    
-    
-    # print(sys.argv)
-    # # processLocalSubjectFolder("/tmp/tmpa4sqewbz", "some_user_name_results")
-    # # processLocalSubjectFolder("/tmp/tmpqg3u6hdr", "some_user_name_results")
-    # # processLocalSubjectFolder("/tmp/tmpa0c7p0na")
-    # # processLocalSubjectFolder("/tmp/tmp_287z04g")
-    # # processLocalSubjectFolder("/tmp/tmp99d3lw9v/")
-    # processLocalSubjectFolder(
-    #     sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else None)
+    # test=1
