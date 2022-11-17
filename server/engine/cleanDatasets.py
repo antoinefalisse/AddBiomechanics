@@ -32,6 +32,7 @@ if dataset == 'cmu_dataset':
     # Loop over subjects
     count = 0
     count1 = 0
+    print(os.listdir(path_clean_dataset))
     for subject in os.listdir(path_clean_dataset):
     # subject = '90'
         if os.path.isdir(os.path.join(path_clean_dataset, subject)):
