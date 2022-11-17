@@ -8,11 +8,6 @@ path_main = os.getcwd()
 path_server = os.path.dirname(path_main)
 path_data = os.path.join(path_server, 'data')
 
-test = os.listdir(os.path.join(path_main, 'tset_folder'))
-
-if not test:
-    print('Antoine')
-
 # Pick dataset
 dataset = 'cmu_dataset'
 
