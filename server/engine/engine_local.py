@@ -941,7 +941,7 @@ if __name__ == "__main__":
     
     path_main = os.getcwd()
     path_server = os.path.dirname(path_main)
-    path_data = os.path.join(path_server, 'data', 'cmu_dataset')
+    path_data = os.path.join(path_server, 'data')
     dataset = 'cmu_dataset'
     path_dataset = os.path.join(path_data, dataset)
     subjects = []
