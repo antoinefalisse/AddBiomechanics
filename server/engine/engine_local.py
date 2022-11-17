@@ -948,7 +948,7 @@ if __name__ == "__main__":
     for file in os.listdir(path_dataset):
         try:
             idx_file = int(file)
-            subjects.append(idx_file)
+            subjects.append(file)
         except:
             pass
             
