@@ -962,7 +962,8 @@ if __name__ == "__main__":
                         'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']   
     
     for subject in subjects[:2]:
-        pathSubject = os.path.join(path_dataset, subject)    
+        pathSubject = os.path.join(path_dataset, subject)
+        print(pathSubject)
         processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
     
     # test=1
