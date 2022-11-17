@@ -37,6 +37,9 @@ if dataset == 'cmu_dataset':
         if os.path.isdir(os.path.join(path_clean_dataset, subject)):
             print("Processing subject {}".format(subject))
             
+            if not subject in bad_trials:
+                continue
+            
             path_subject = os.path.join(path_clean_dataset, subject)
             path_trials = os.path.join(path_subject, 'trials')
             
