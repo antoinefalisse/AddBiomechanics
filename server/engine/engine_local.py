@@ -954,6 +954,7 @@ if __name__ == "__main__":
             
             
     print(subjects)
+    print(len(subjects))
         
     
     
