@@ -262,10 +262,10 @@ def processLocalSubjectFolder(path: str, marker_set_fixed= [], outputName: str =
         intvs_bool = intvs > 2
         if True in intvs_bool:
             first_intv = np.argwhere(intvs_bool == True)[0][0]
-        cut_idx = bad_frames[starts[first_intv]]      
-        del markerTrials[i][cut_idx:len(markerTrials[i])]
-        del trialTimestamps[i][cut_idx:len(trialTimestamps[i])]
-        del trialForcePlates[i][cut_idx:len(trialForcePlates[i])]
+            cut_idx = bad_frames[starts[first_intv]]      
+            del markerTrials[i][cut_idx:len(markerTrials[i])]
+            del trialTimestamps[i][cut_idx:len(trialTimestamps[i])]
+            del trialForcePlates[i][cut_idx:len(trialForcePlates[i])]
         
         trialErrorReports.append(trialErrorReport)
         hasEnoughMarkers = markerFitter.checkForEnoughMarkers(markerTrials[i])
