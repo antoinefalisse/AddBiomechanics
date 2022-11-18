@@ -948,7 +948,7 @@ if __name__ == "__main__":
     path_data = os.path.join(path_server, 'data')
     
     
-    dataset = 'cycling_dataset'
+    dataset = 'cmu_dataset'
     
     if dataset == 'cmu_dataset':
     
@@ -994,10 +994,10 @@ if __name__ == "__main__":
         print(subjects_nonProcessed)
         print(len(subjects_nonProcessed))
         
-        for subject in subjects_nonProcessed[25:]:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
+        # for subject in subjects_nonProcessed[25:]:
+        #     print("Processing {}".format(subject))
+        #     pathSubject = os.path.join(path_dataset, subject)
+        #     processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
         
         # nThreads = 10
         # Parallel(n_jobs=nThreads)(
