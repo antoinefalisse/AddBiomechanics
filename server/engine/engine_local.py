@@ -992,7 +992,7 @@ if __name__ == "__main__":
     print(subjects_nonProcessed)
     print(len(subjects_nonProcessed))
     
-    for subject in subjects_nonProcessed[20:25]:
+    for subject in subjects_nonProcessed[25:]:
         print("Processing {}".format(subject))
         pathSubject = os.path.join(path_dataset, subject)
         processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
