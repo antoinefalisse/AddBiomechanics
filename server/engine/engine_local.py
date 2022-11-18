@@ -12,6 +12,9 @@ import shutil
 import textwrap
 import traceback
 
+from joblib import Parallel, delayed
+import multiprocessing
+
 GEOMETRY_FOLDER_PATH = absPath('Geometry')
 DATA_FOLDER_PATH = absPath('../data')
 
@@ -953,13 +956,20 @@ if __name__ == "__main__":
             pass
             
             
-    print(subjects)
-    print(len(subjects))
+    # print(subjects)
+    # print(len(subjects))
     
-    # marker_set_fixed = ['C7', 'T10', 'CLAV', 'STRN', 'RELB', 'RWRA', 'RWRB',
-    #                     'LELB', 'LWRA', 'LWRB', 'RFWT', 'LFWT', 'RBWT', 'LBWT',
-    #                     'RKNE', 'RANK', 'RHEE', 'RTOE', 'RMT5', 
-    #                     'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']   
+    marker_set_fixed = ['C7', 'T10', 'CLAV', 'STRN', 'RELB', 'RWRA', 'RWRB',
+                        'LELB', 'LWRA', 'LWRB', 'RFWT', 'LFWT', 'RBWT', 'LBWT',
+                        'RKNE', 'RANK', 'RHEE', 'RTOE', 'RMT5', 
+                        'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']
+    
+    
+    nThreads = multiprocessing.cpu_count()-2
+    
+    Parallel(n_jobs=nThreads)(
+        delayed(processLocalSubjectFolder)(
+            os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects[2:4])
     
     # for subject in subjects[:2]:
     #     pathSubject = os.path.join(path_dataset, subject)
