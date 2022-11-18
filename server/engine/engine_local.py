@@ -976,6 +976,7 @@ if __name__ == "__main__":
     #     print(pathSubject)
     #     processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
     
+    print(subjects)
     subjects_nonProcessed = []
     for subject in subjects:
         pathSubject = os.path.join(path_dataset, subject)
