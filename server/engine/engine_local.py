@@ -1012,7 +1012,7 @@ if __name__ == "__main__":
         subjects = []
         for file in os.listdir(path_dataset):
             try:
-                idx_file = int(file)
+                idx_file = int(file[1:])
                 subjects.append(file)
             except:
                 pass
