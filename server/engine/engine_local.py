@@ -1037,4 +1037,4 @@ if __name__ == "__main__":
         for subject in subjects_nonProcessed[:1]:
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            # processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder(pathSubject)
