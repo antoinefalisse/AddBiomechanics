@@ -56,6 +56,197 @@ if dataset == 'cmu_dataset':
                 path_generic_c3d_end = os.path.join(path_trial, 'markers.c3d')
                 shutil.copy2(path_generic_c3d, path_generic_c3d_end)
                 
+elif dataset == 'cycling':
+    
+    infoSubjects = {'P003': {'massKg': 76.5,
+                             'heightM': 1.78,
+                             'sex': 'female'},
+                    'P004': {'massKg': 102.3,
+                             'heightM': 1.83,
+                             'sex': 'male'},
+                    'P005': {'massKg': 60.6,
+                             'heightM': 1.62,
+                             'sex': 'female'},
+                    'P006': {'massKg': 92.3,
+                             'heightM': 1.82,
+                             'sex': 'male'},
+                    'P007': {'massKg': 68.1,
+                             'heightM': 1.72,
+                             'sex': 'female'},
+                    'P008': {'massKg': 66,
+                             'heightM': 1.57,
+                             'sex': 'female'},
+                    'P009': {'massKg': 75.7,
+                             'heightM': 1.79,
+                             'sex': 'male'},
+                    'P010': {'massKg': 74.2,
+                             'heightM': 1.71,
+                             'sex': 'male'},
+                    'P011': {'massKg': 64.2,
+                             'heightM': 1.68,
+                             'sex': 'male'},
+                    'P012': {'massKg': 61.1,
+                             'heightM': 1.66,
+                             'sex': 'female'},
+                    'P013': {'massKg': 64.1,
+                             'heightM': 1.58,
+                             'sex': 'female'},
+                    'P014': {'massKg': 66,
+                             'heightM': 1.69,
+                             'sex': 'female'},
+                    'P015': {'massKg': 90.8,
+                             'heightM': 1.95,
+                             'sex': 'male'},
+                    'P016':  {'massKg': 92.1,
+                             'heightM': 1.78,
+                             'sex': 'female'},
+                    'P018': {'massKg': 79.4,
+                             'heightM': 1.88,
+                             'sex': 'male'},
+                    'P019': {'massKg': 86,
+                             'heightM': 1.87,
+                             'sex': 'male'},
+                    'P020': {'massKg': 68.8,
+                             'heightM': 1.65,
+                             'sex': 'male'},
+                    'P021': {'massKg': 66.5,
+                             'heightM': 1.73,
+                             'sex': 'male'},
+                    'P022': {'massKg': 59.7,
+                             'heightM': 1.66,
+                             'sex': 'female'},
+                    'P023': {'massKg': 76.1,
+                             'heightM': 1.80,
+                             'sex': 'male'},
+                    'P025': {'massKg': 75.6,
+                             'heightM': 1.71,
+                             'sex': 'male'},
+                    'P026': {'massKg': 61.1,
+                             'heightM': 1.64,
+                             'sex': 'female'},
+                    'P027': {'massKg': 70.5,
+                             'heightM': 1.72,
+                             'sex': 'male'},
+                    'P028': {'massKg': 81.9,
+                             'heightM': 1.81,
+                             'sex': 'male'},
+                    'P029': {'massKg': 89.3,
+                             'heightM': 1.84,
+                             'sex': 'male'},
+                    'P031': {'massKg': 54.2,
+                             'heightM': 1.63,
+                             'sex': 'female'},
+                    'P032':  {'massKg': 91.5,
+                             'heightM': 1.84,
+                             'sex': 'male'},
+                    'P033': {'massKg': 66.1,
+                             'heightM': 1.67,
+                             'sex': 'female'},
+                    'P034': {'massKg': 65.8,
+                             'heightM': 1.73,
+                             'sex': 'female'},
+                    'P036': {'massKg': 56.7,
+                             'heightM': 1.60,
+                             'sex': 'female'},
+                    'P038': {'massKg': 79.9,
+                             'heightM': 1.88,
+                             'sex': 'male'},
+                    'P039': {'massKg': 63.2,
+                             'heightM': 1.76,
+                             'sex': 'male'},
+                    'P040': {'massKg': 78,
+                             'heightM': 1.57,
+                             'sex': 'female'},
+                    'P041': {'massKg': 57.1,
+                             'heightM': 1.69,
+                             'sex': 'female'},
+                    'P042': {'massKg': 90.8,
+                             'heightM': 1.84,
+                             'sex': 'male'},
+                    'P043': {'massKg': 74.5,
+                             'heightM': 1.80,
+                             'sex': 'male'},
+                    'P045': {'massKg': 91.3,
+                             'heightM': 1.81,
+                             'sex': 'male'}}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+                
     
     
     

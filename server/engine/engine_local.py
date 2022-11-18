@@ -953,17 +953,17 @@ if __name__ == "__main__":
             pass
             
             
-    # print(subjects)
-    # print(len(subjects))
+    print(subjects)
+    print(len(subjects))
     
-    marker_set_fixed = ['C7', 'T10', 'CLAV', 'STRN', 'RELB', 'RWRA', 'RWRB',
-                        'LELB', 'LWRA', 'LWRB', 'RFWT', 'LFWT', 'RBWT', 'LBWT',
-                        'RKNE', 'RANK', 'RHEE', 'RTOE', 'RMT5', 
-                        'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']   
+    # marker_set_fixed = ['C7', 'T10', 'CLAV', 'STRN', 'RELB', 'RWRA', 'RWRB',
+    #                     'LELB', 'LWRA', 'LWRB', 'RFWT', 'LFWT', 'RBWT', 'LBWT',
+    #                     'RKNE', 'RANK', 'RHEE', 'RTOE', 'RMT5', 
+    #                     'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']   
     
-    for subject in subjects[:2]:
-        pathSubject = os.path.join(path_dataset, subject)
-        print(pathSubject)
-        processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
+    # for subject in subjects[:2]:
+    #     pathSubject = os.path.join(path_dataset, subject)
+    #     print(pathSubject)
+    #     processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
     
     # test=1
