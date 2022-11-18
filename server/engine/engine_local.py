@@ -966,16 +966,22 @@ if __name__ == "__main__":
     
     
     # nThreads = multiprocessing.cpu_count()-5
-    nThreads = 15
-    
-    
-    Parallel(n_jobs=nThreads)(
-        delayed(processLocalSubjectFolder)(
-            os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects[4:])
+    # nThreads = 15
+    # Parallel(n_jobs=nThreads)(
+    #     delayed(processLocalSubjectFolder)(
+    #         os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects[4:])
     
     # for subject in subjects[:2]:
     #     pathSubject = os.path.join(path_dataset, subject)
     #     print(pathSubject)
     #     processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
+    
+    subjects_nonProcessed = []
+    for subject in subjects[:2]:
+        pathSubject = os.path.join(path_dataset, subject)
+        pathJson = os.path.join(pathSubject, '_results.json')
+        if not os.path.exists(pathJson):
+            subjects_nonProcessed.append(subject)
+    print(subjects_nonProcessed)
     
     # test=1
