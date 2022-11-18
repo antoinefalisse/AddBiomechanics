@@ -2,7 +2,7 @@ import os
 import shutil
 import json
 
-path_my_datasets = '/home/clarkadmin/Documents/myDatasets_Antoine'
+
 path_main = os.getcwd()
 path_server = os.path.dirname(path_main)
 path_data = os.path.join(path_server, 'data')
@@ -14,10 +14,11 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'cmu_dataset'
+dataset = 'cycling_dataset'
 
 if dataset == 'cmu_dataset':
     
+    path_my_datasets = '/home/clarkadmin/Documents/myDatasets_Antoine'
     path_original_dataset = os.path.join(path_my_datasets, dataset)
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)
@@ -56,7 +57,7 @@ if dataset == 'cmu_dataset':
                 path_generic_c3d_end = os.path.join(path_trial, 'markers.c3d')
                 shutil.copy2(path_generic_c3d, path_generic_c3d_end)
                 
-elif dataset == 'cycling':
+elif dataset == 'cycling_dataset':
     
     infoSubjects = {'P003': {'massKg': 76.5,
                              'heightM': 1.78,
@@ -168,85 +169,47 @@ elif dataset == 'cycling':
                              'sex': 'male'},
                     'P045': {'massKg': 91.3,
                              'heightM': 1.81,
+                             'sex': 'male'},
+                    'P050': {'massKg': 81.9,
+                             'heightM': 1.81,
+                             'sex': 'male'},
+                    'P051': {'massKg': 79.9,
+                             'heightM': 1.88,
                              'sex': 'male'}}
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    path_original_dataset = '/home/clarkadmin/Downloads/cycling_anthony_cleaned'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):
+            
+            # Create new subject folder
+            path_subject = os.path.join(path_clean_dataset, subject)
+            os.makedirs(path_subject, exist_ok=True)
+    
+            # Copy generic model
+            path_generic_model = os.path.join(path_original_dataset, 'Model_markers.osim')
+            path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+            shutil.copy2(path_generic_model, path_generic_model_end)
+            
+            # Dump generic demographics
+            outfile = os.path.join(path_subject, '_subject.json')
+            subject_data = {'massKg': infoSubjects['massKg'],
+                            'heightM': infoSubjects['heightM'],
+                            'sex': infoSubjects['sex'],
+                            'skeletonPreset': 'custom'}
+            with open(outfile, "w") as outfile:
+                json.dump(subject_data, outfile)
                 
-    
-    
-    
+            # Re-organize marker data            
+            path_original_subject = os.path.join(path_original_dataset, subject)
+            path_trials = os.path.join(path_subject, 'trials')
+            
+            path_generic_trc = os.path.join(path_original_subject, 'marker_data.trc')
+            path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+            shutil.copy2(path_generic_trc, path_generic_trc_end)
+            
