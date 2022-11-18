@@ -965,7 +965,7 @@ if __name__ == "__main__":
                         'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']
     
     
-    nThreads = multiprocessing.cpu_count()-2
+    nThreads = multiprocessing.cpu_count()-5
     
     Parallel(n_jobs=nThreads)(
         delayed(processLocalSubjectFolder)(
