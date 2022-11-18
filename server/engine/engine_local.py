@@ -240,35 +240,36 @@ def processLocalSubjectFolder(path: str, marker_set_fixed= [], outputName: str =
         # markerTrials[i] = trialErrorReport.markerObservationsAttemptedFixed
         
         # Check if frame has enough data
-        bad_frames = []
-        for c_f_idx, c_f in enumerate(markerTrials[i]):            
-            count = 0
-            for c_m in marker_set_fixed:
-                if c_m in list(c_f.keys()):
-                    count += 1
-            if count < 20: # TODO testing
-                bad_frames.append(c_f_idx)
-                
-        bad_frames_np = np.asarray(bad_frames)
-        bad_frames_diff = np.diff(bad_frames_np)
-        bad_frames_diff[bad_frames_diff != 1] = 0
-        # Append zeros columns at either sides of counts
-        counts_ext = np.insert(bad_frames_diff,0, 0)
-        counts_ext = np.insert(counts_ext,counts_ext.shape[0], 0)        
-        # Get start and stop indices with 1s as triggers
-        diffs = np.diff((counts_ext==1).astype(int),axis=0)
-        starts = np.argwhere(diffs == 1).flatten()
-        stops = np.argwhere(diffs == -1).flatten()        
-        # Get intervals using differences between start and stop indices
-        intvs = stops - starts
-        # If one interval is > 2, then we cut
-        intvs_bool = intvs > 2
-        if True in intvs_bool:
-            first_intv = np.argwhere(intvs_bool == True)[0][0]
-            cut_idx = bad_frames[starts[first_intv]]      
-            del markerTrials[i][cut_idx:len(markerTrials[i])]
-            del trialTimestamps[i][cut_idx:len(trialTimestamps[i])]
-            del trialForcePlates[i][cut_idx:len(trialForcePlates[i])]
+        if marker_set_fixed:
+            bad_frames = []
+            for c_f_idx, c_f in enumerate(markerTrials[i]):            
+                count = 0
+                for c_m in marker_set_fixed:
+                    if c_m in list(c_f.keys()):
+                        count += 1
+                if count < 20: # TODO testing
+                    bad_frames.append(c_f_idx)
+                    
+            bad_frames_np = np.asarray(bad_frames)
+            bad_frames_diff = np.diff(bad_frames_np)
+            bad_frames_diff[bad_frames_diff != 1] = 0
+            # Append zeros columns at either sides of counts
+            counts_ext = np.insert(bad_frames_diff,0, 0)
+            counts_ext = np.insert(counts_ext,counts_ext.shape[0], 0)        
+            # Get start and stop indices with 1s as triggers
+            diffs = np.diff((counts_ext==1).astype(int),axis=0)
+            starts = np.argwhere(diffs == 1).flatten()
+            stops = np.argwhere(diffs == -1).flatten()        
+            # Get intervals using differences between start and stop indices
+            intvs = stops - starts
+            # If one interval is > 2, then we cut
+            intvs_bool = intvs > 2
+            if True in intvs_bool:
+                first_intv = np.argwhere(intvs_bool == True)[0][0]
+                cut_idx = bad_frames[starts[first_intv]]      
+                del markerTrials[i][cut_idx:len(markerTrials[i])]
+                del trialTimestamps[i][cut_idx:len(trialTimestamps[i])]
+                del trialForcePlates[i][cut_idx:len(trialForcePlates[i])]
         
         trialErrorReports.append(trialErrorReport)
         hasEnoughMarkers = markerFitter.checkForEnoughMarkers(markerTrials[i])
@@ -945,61 +946,95 @@ if __name__ == "__main__":
     path_main = os.getcwd()
     path_server = os.path.dirname(path_main)
     path_data = os.path.join(path_server, 'data')
-    dataset = 'cmu_dataset'
-    path_dataset = os.path.join(path_data, dataset)
-    subjects = []
-    for file in os.listdir(path_dataset):
-        try:
-            idx_file = int(file)
-            subjects.append(file)
-        except:
-            pass
-            
-            
-    # print(subjects)
-    # print(len(subjects))
-    
-    marker_set_fixed = ['C7', 'T10', 'CLAV', 'STRN', 'RELB', 'RWRA', 'RWRB',
-                        'LELB', 'LWRA', 'LWRB', 'RFWT', 'LFWT', 'RBWT', 'LBWT',
-                        'RKNE', 'RANK', 'RHEE', 'RTOE', 'RMT5', 
-                        'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']
     
     
-    # nThreads = multiprocessing.cpu_count()-5
-    # nThreads = 15
-    # Parallel(n_jobs=nThreads)(
-    #     delayed(processLocalSubjectFolder)(
-    #         os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects[4:])
+    dataset = 'cycling_dataset'
     
-    # for subject in subjects[:2]:
-    #     pathSubject = os.path.join(path_dataset, subject)
-    #     print(pathSubject)
-    #     processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
+    if dataset == 'cmu_dataset':
     
-    print(subjects)
-    print(len(subjects))
-    subjects_Processed = []
-    subjects_nonProcessed = []
-    for subject in subjects:
-        pathSubject = os.path.join(path_dataset, subject)
-        pathJson = os.path.join(pathSubject, '_results.json')
-        if os.path.exists(pathJson):
-            subjects_Processed.append(subject)
-        else:
-            subjects_nonProcessed.append(subject)
-    print(subjects_Processed)
-    print(len(subjects_Processed))
-    print(subjects_nonProcessed)
-    print(len(subjects_nonProcessed))
+        path_dataset = os.path.join(path_data, dataset)
+        subjects = []
+        for file in os.listdir(path_dataset):
+            try:
+                idx_file = int(file)
+                subjects.append(file)
+            except:
+                pass
+        
+        marker_set_fixed = ['C7', 'T10', 'CLAV', 'STRN', 'RELB', 'RWRA', 'RWRB',
+                            'LELB', 'LWRA', 'LWRB', 'RFWT', 'LFWT', 'RBWT', 'LBWT',
+                            'RKNE', 'RANK', 'RHEE', 'RTOE', 'RMT5', 
+                            'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']
+        
+        
+        # nThreads = multiprocessing.cpu_count()-5
+        # nThreads = 15
+        # Parallel(n_jobs=nThreads)(
+        #     delayed(processLocalSubjectFolder)(
+        #         os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects[4:])
+        
+        # for subject in subjects[:2]:
+        #     pathSubject = os.path.join(path_dataset, subject)
+        #     print(pathSubject)
+        #     processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
+        
+        print(subjects)
+        print(len(subjects))
+        subjects_Processed = []
+        subjects_nonProcessed = []
+        for subject in subjects:
+            pathSubject = os.path.join(path_dataset, subject)
+            pathJson = os.path.join(pathSubject, '_results.json')
+            if os.path.exists(pathJson):
+                subjects_Processed.append(subject)
+            else:
+                subjects_nonProcessed.append(subject)
+        print(subjects_Processed)
+        print(len(subjects_Processed))
+        print(subjects_nonProcessed)
+        print(len(subjects_nonProcessed))
+        
+        for subject in subjects_nonProcessed[25:]:
+            print("Processing {}".format(subject))
+            pathSubject = os.path.join(path_dataset, subject)
+            processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
+        
+        # nThreads = 10
+        # Parallel(n_jobs=nThreads)(
+        #     delayed(processLocalSubjectFolder)(
+        #         os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects_nonProcessed)
+        
+        # test=1
+        
+    elif dataset == 'cycling_dataset':
     
-    for subject in subjects_nonProcessed[25:]:
-        print("Processing {}".format(subject))
-        pathSubject = os.path.join(path_dataset, subject)
-        processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
-    
-    # nThreads = 10
-    # Parallel(n_jobs=nThreads)(
-    #     delayed(processLocalSubjectFolder)(
-    #         os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects_nonProcessed)
-    
-    # test=1
+        path_dataset = os.path.join(path_data, dataset)
+        subjects = []
+        for file in os.listdir(path_dataset):
+            try:
+                idx_file = int(file)
+                subjects.append(file)
+            except:
+                pass
+        
+        print(subjects)
+        print(len(subjects))
+        subjects_Processed = []
+        subjects_nonProcessed = []
+        for subject in subjects:
+            pathSubject = os.path.join(path_dataset, subject)
+            pathJson = os.path.join(pathSubject, '_results.json')
+            if os.path.exists(pathJson):
+                subjects_Processed.append(subject)
+            else:
+                subjects_nonProcessed.append(subject)
+                
+        print(subjects_Processed)
+        print(len(subjects_Processed))
+        print(subjects_nonProcessed)
+        print(len(subjects_nonProcessed))
+        
+        for subject in subjects_nonProcessed[:1]:
+            print("Processing {}".format(subject))
+            pathSubject = os.path.join(path_dataset, subject)
+            # processLocalSubjectFolder(pathSubject)
