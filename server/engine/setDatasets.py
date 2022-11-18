@@ -208,6 +208,8 @@ elif dataset == 'cycling_dataset':
             # Re-organize marker data            
             path_original_subject = os.path.join(path_original_dataset, subject)
             path_trials = os.path.join(path_subject, 'trials')
+            path_trial = os.path.join(path_trials, 'trial')
+            os.makedirs(path_trial, exist_ok=True)
             
             path_generic_trc = os.path.join(path_original_subject, 'marker_data.trc')
             path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
