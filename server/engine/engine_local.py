@@ -969,7 +969,7 @@ if __name__ == "__main__":
     
     Parallel(n_jobs=nThreads)(
         delayed(processLocalSubjectFolder)(
-            os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects[2:4])
+            os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects[4:])
     
     # for subject in subjects[:2]:
     #     pathSubject = os.path.join(path_dataset, subject)
