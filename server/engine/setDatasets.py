@@ -198,9 +198,9 @@ elif dataset == 'cycling_dataset':
             
             # Dump generic demographics
             outfile = os.path.join(path_subject, '_subject.json')
-            subject_data = {'massKg': infoSubjects['massKg'],
-                            'heightM': infoSubjects['heightM'],
-                            'sex': infoSubjects['sex'],
+            subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                            'heightM': infoSubjects[subject]['heightM'],
+                            'sex': infoSubjects[subject]['sex'],
                             'skeletonPreset': 'custom'}
             with open(outfile, "w") as outfile:
                 json.dump(subject_data, outfile)
