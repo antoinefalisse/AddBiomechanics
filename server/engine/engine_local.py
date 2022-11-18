@@ -983,5 +983,6 @@ if __name__ == "__main__":
         if os.path.exists(pathJson):
             subjects_nonProcessed.append(subject)
     print(subjects_nonProcessed)
+    print(len(subjects_nonProcessed))
     
     # test=1
