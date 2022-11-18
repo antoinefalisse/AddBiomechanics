@@ -977,12 +977,18 @@ if __name__ == "__main__":
     #     processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
     
     print(subjects)
+    print(len(subjects))
+    subjects_Processed = []
     subjects_nonProcessed = []
     for subject in subjects:
         pathSubject = os.path.join(path_dataset, subject)
         pathJson = os.path.join(pathSubject, '_results.json')
         if os.path.exists(pathJson):
+            subjects_Processed.append(subject)
+        else:
             subjects_nonProcessed.append(subject)
+    print(subjects_Processed)
+    print(len(subjects_Processed))
     print(subjects_nonProcessed)
     print(len(subjects_nonProcessed))
     
