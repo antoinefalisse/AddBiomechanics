@@ -237,7 +237,7 @@ def processLocalSubjectFolder(path: str, marker_set_fixed= [], outputName: str =
         trialErrorReport = markerFitter.generateDataErrorsReport(
             markerTrials[i], 1.0 / trialFramesPerSecond[i])
         # TODO: there is something wrong going on here
-        # markerTrials[i] = trialErrorReport.markerObservationsAttemptedFixed
+        markerTrials[i] = trialErrorReport.markerObservationsAttemptedFixed
         
         # Check if frame has enough data
         if marker_set_fixed:
@@ -948,7 +948,7 @@ if __name__ == "__main__":
     path_data = os.path.join(path_server, 'data')
     
     
-    dataset = 'cmu_dataset'
+    dataset = 'cycling_dataset'
     
     if dataset == 'cmu_dataset':
     
