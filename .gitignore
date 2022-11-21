@@ -10,3 +10,4 @@ test_dataset.db
 TODO
 
 server/data/cmu_dataset/*
+server/data/cycling_dataset/*
