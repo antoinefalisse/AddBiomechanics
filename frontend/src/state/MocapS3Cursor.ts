@@ -379,7 +379,26 @@ class MocapS3Cursor {
         const logMetadata = this.rawCursor.getChildMetadata(path + "log.txt");
         const resultsMetadata = this.rawCursor.getChildMetadata(path + "_results.json");
 
-        if (anyTrialsMissingMarkers || (hasCustomFlag && !hasOsimFile) || !hasAnyTrials) {
+        let anyConfigInvalid = false;
+        if (path === '') {
+            let weightValue = this.subjectJson.getAttribute("massKg", 0.0);
+            let heightValue = this.subjectJson.getAttribute("heightM", 0.0);
+            let fitDynamics = this.subjectJson.getAttribute("fitDynamics", false);
+            let skeletonPreset = this.subjectJson.getAttribute("skeletonPreset", this.hasModelFile() ? "custom" : "vicon");
+            let footBodyNames = this.subjectJson.getAttribute("footBodyNames", []);
+
+            if (weightValue < 5 || weightValue > 700) {
+                anyConfigInvalid = true;
+            }
+            if (heightValue < 0.1 || heightValue > 3) {
+                anyConfigInvalid = true;
+            }
+            if (fitDynamics && skeletonPreset === "custom" && footBodyNames.length != 2) {
+                anyConfigInvalid = true;
+            }
+        }
+
+        if (anyTrialsMissingMarkers || anyConfigInvalid || (hasCustomFlag && !hasOsimFile) || !hasAnyTrials) {
             return 'empty';
         }
         else if (logMetadata != null && resultsMetadata != null) {
