@@ -24,7 +24,12 @@ if dataset == 'cmu_dataset':
                   '93': ['93_07'],
                   '79': ['79_67','79_77'],
                   '54': ['54_15'],
-                  '88': ['88_02']}
+                  '88': ['88_02'],
+                  '138': ['138_54','138_44'],
+                  '87': ['87_02','87_05'],
+                  '40': ['40_03'],
+                  '36': ['36_14'],
+                  '27': ['27_09']}
     
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)
