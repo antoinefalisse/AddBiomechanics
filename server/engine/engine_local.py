@@ -948,7 +948,7 @@ if __name__ == "__main__":
     path_data = os.path.join(path_server, 'data')
     
     
-    dataset = 'cmu_dataset'
+    dataset = 'cycling_dataset'
     
     if dataset == 'cmu_dataset':
     
@@ -1035,7 +1035,7 @@ if __name__ == "__main__":
         print(len(subjects_nonProcessed))
         
         # for subject in subjects_Processed[:1]:
-        subject = 'P020'
+        subject = 'P003'
         print("Processing {}".format(subject))
         pathSubject = os.path.join(path_dataset, subject)
         processLocalSubjectFolder(pathSubject)
