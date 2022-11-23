@@ -196,6 +196,7 @@ def processLocalSubjectFolder(path: str, marker_set_fixed= [], outputName: str =
             c3dFile: nimble.biomechanics.C3D = nimble.biomechanics.C3DLoader.loadC3D(
                 c3dFilePath)
             nimble.biomechanics.C3DLoader.fixupMarkerFlips(c3dFile)
+            print(c3dFilePath)
             markerFitter.autorotateC3D(c3dFile)
             c3dFiles[trialName] = c3dFile
             trialForcePlates.append(c3dFile.forcePlates)
