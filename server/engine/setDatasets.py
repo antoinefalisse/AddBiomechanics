@@ -14,7 +14,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'balance_dataset'
+dataset = 'cmu_dataset'
 
 if dataset == 'cmu_dataset':
     
@@ -31,6 +31,8 @@ if dataset == 'cmu_dataset':
             
             if not subject in subjects_to_process:
                 continue
+            
+            print('Processing subject {}'.format(subject))
             
             # Create new subject folder
             path_subject = os.path.join(path_clean_dataset, subject)

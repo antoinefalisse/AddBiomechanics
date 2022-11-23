@@ -12,7 +12,7 @@ path_main = os.getcwd()
 dataDir = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/'
 
 # Pick dataset
-dataset = 'cmu_dataset'
+dataset = 'balance_dataset_cleaned'
 
 if dataset == 'cmu_dataset':
     
@@ -138,6 +138,38 @@ elif dataset == 'cycling_anthony_cleaned':
                     cmd = 'opensim-cmd run-tool Models/rescaling_setup.xml'
                     os.system(cmd)
                     os.chdir(path_main)
+                    
+                    
+elif dataset == 'balance_dataset_cleaned':
+    
+    processed_subjects = ['Subj03', 'Subj04', 'Subj05', 'Subj06', 'Subj07', 'Subj08']
+    
+    # marker_set_fixed = ['C7', 'T10', 'CLAV', 'STRN', 'RELB', 'RWRA', 'RWRB',
+    #                     'LELB', 'LWRA', 'LWRB', 'RFWT', 'LFWT', 'RBWT', 'LBWT',
+    #                     'RKNE', 'RANK', 'RHEE', 'RTOE', 'RMT5', 
+    #                     'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']
+    
+    path_clean_dataset = os.path.join(dataDir, dataset)
+    
+    # Loop over subjects
+    count = 0
+    count1 = 0
+    # print(os.listdir(path_clean_dataset))
+    # with open('Report_rmses_cycling.txt', 'w') as f:
+    for subject in os.listdir(path_clean_dataset):
+        if subject in processed_subjects:
+            # print("Processing subject {}".format(subject))
+            
+            pathSubject = os.path.join(path_clean_dataset, subject)            
+            pathResults = os.path.join(pathSubject, 'osim_results')
+            if not os.path.exists(os.path.join(pathResults, 'Models', 'optimized_scale_and_markers.osim')):
+                os.chdir(pathResults)
+                cmd = 'opensim-cmd run-tool Models/rescaling_setup.xml'
+                os.system(cmd)
+                os.chdir(path_main)
+                
+                    
+                    
                 
                 # pathC3D = os.path.join(pathResults, 'C3D') 
                 # pathIK = os.path.join(pathResults, 'IK')
