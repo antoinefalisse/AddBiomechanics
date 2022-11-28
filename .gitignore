@@ -11,3 +11,5 @@ TODO
 
 server/data/cmu_dataset/*
 server/data/cycling_dataset/*
+server/data/balance_dataset/*
+server/data/myer_dataset/*

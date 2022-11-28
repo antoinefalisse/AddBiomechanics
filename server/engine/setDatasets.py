@@ -382,7 +382,7 @@ elif dataset == 'myer_dataset':
                 
                 # Create new subject folder
                 subject_clean = ID
-                path_subject = os.path.join(path_clean_dataset, subject_clean)
+                path_subject = os.path.join(path_clean_dataset, folder, subject_clean)
                 os.makedirs(path_subject, exist_ok=True)
         
                 # Copy generic model
@@ -400,7 +400,7 @@ elif dataset == 'myer_dataset':
                     json.dump(subject_data, outfile)
                     
                 # Re-organize marker data            
-                path_original_subject = os.path.join(path_original_dataset, subject)
+                path_original_subject = os.path.join(pathFolder, subject)
                 path_trials = os.path.join(path_subject, 'trials')
                 
                 
