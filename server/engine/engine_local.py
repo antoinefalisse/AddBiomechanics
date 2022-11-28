@@ -949,7 +949,7 @@ if __name__ == "__main__":
     path_data = os.path.join(path_server, 'data')
     
     
-    dataset = 'cmu_dataset'
+    dataset = 'myer_dataset'
     
     if dataset == 'cmu_dataset':
     
@@ -1049,6 +1049,36 @@ if __name__ == "__main__":
         for file in os.listdir(path_dataset):
             try:
                 idx_file = int(file[4:])
+                subjects.append(file)
+            except:
+                pass
+        
+        print(subjects)
+        print(len(subjects))
+        subjects_Processed = []
+        subjects_nonProcessed = []
+        for subject in subjects:
+            pathSubject = os.path.join(path_dataset, subject)
+            pathJson = os.path.join(pathSubject, '_results.json')
+            if os.path.exists(pathJson):
+                subjects_Processed.append(subject)
+            else:
+                subjects_nonProcessed.append(subject)
+                
+        for subject in subjects_nonProcessed:
+            print("Processing {}".format(subject))
+            pathSubject = os.path.join(path_dataset, subject)
+            processLocalSubjectFolder(pathSubject)
+            
+    elif dataset == 'myer_dataset':
+        
+        session = 'PreTesting_2017_fall'
+    
+        path_dataset = os.path.join(path_data, dataset, session)
+        subjects = []
+        for file in os.listdir(path_dataset):
+            try:
+                idx_file = int(file[-3:])
                 subjects.append(file)
             except:
                 pass
