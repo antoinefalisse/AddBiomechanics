@@ -1402,3 +1402,29 @@
 [2022-11-22 11:26:53.381] [info] PointKinematics.end: Finalizing analysis PointKinematics.
 [2022-11-22 11:26:53.381] [info] PointKinematics.end: Finalizing analysis PointKinematics.
 [2022-11-22 11:26:53.381] [info] Printing results of investigation PK_94 to C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/cmu_dataset\94\osim_results\Models\PK
+[2022-11-23 11:01:27.676] [info] Preparing to run AnalyzeTool.
+[2022-11-23 11:01:27.680] [info] AbstractTool PK_138 loading model C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/cmu_dataset\138\osim_results\Models\optimized_scale_and_markers.osim
+[2022-11-23 11:01:27.720] [info] Loaded model optimized_scale_and_markers from file C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/cmu_dataset\138\osim_results\Models\optimized_scale_and_markers.osim
+[2022-11-23 11:01:28.049] [info] No external loads will be applied (external loads file not specified).
+[2022-11-23 11:01:28.220] [info] Loading coordinates from file 'C:\Users\antoi\Documents\MyRepositories\AddBiomechanics\server\engine\static.mot'.
+[2022-11-23 11:01:28.220] [info] Storage: read data file = C:\Users\antoi\Documents\MyRepositories\AddBiomechanics\server\engine\static.mot (nr=10 nc=34)
+[2022-11-23 11:01:28.220] [warning] Model::formCompleteStorages():  Did not find column /jointset/patellofemoral_r/knee_angle_r_beta/value in storage object.
+[2022-11-23 11:01:28.220] [warning] Model::formCompleteStorages():  Did not find column /jointset/patellofemoral_l/knee_angle_l_beta/value in storage object.
+[2022-11-23 11:01:28.383] [info] Found 10 state vectors with time stamps ranging from 0.0 to 0.075.
+[2022-11-23 11:01:28.383] [info] Executing the analyses from 0.0 to 0.075...
+[2022-11-23 11:01:28.562] [info] PointKinematics.end: Finalizing analysis PointKinematics.
+[2022-11-23 11:01:28.562] [info] PointKinematics.end: Finalizing analysis PointKinematics.
+[2022-11-23 11:01:28.562] [info] Printing results of investigation PK_138 to C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/cmu_dataset\138\osim_results\Models\PK
+[2022-11-23 11:01:29.343] [info] Preparing to run AnalyzeTool.
+[2022-11-23 11:01:29.346] [info] AbstractTool PK_150 loading model C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/cmu_dataset\150\osim_results\Models\optimized_scale_and_markers.osim
+[2022-11-23 11:01:29.388] [info] Loaded model optimized_scale_and_markers from file C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/cmu_dataset\150\osim_results\Models\optimized_scale_and_markers.osim
+[2022-11-23 11:01:29.722] [info] No external loads will be applied (external loads file not specified).
+[2022-11-23 11:01:29.903] [info] Loading coordinates from file 'C:\Users\antoi\Documents\MyRepositories\AddBiomechanics\server\engine\static.mot'.
+[2022-11-23 11:01:29.903] [info] Storage: read data file = C:\Users\antoi\Documents\MyRepositories\AddBiomechanics\server\engine\static.mot (nr=10 nc=34)
+[2022-11-23 11:01:29.904] [warning] Model::formCompleteStorages():  Did not find column /jointset/patellofemoral_r/knee_angle_r_beta/value in storage object.
+[2022-11-23 11:01:29.904] [warning] Model::formCompleteStorages():  Did not find column /jointset/patellofemoral_l/knee_angle_l_beta/value in storage object.
+[2022-11-23 11:01:30.077] [info] Found 10 state vectors with time stamps ranging from 0.0 to 0.075.
+[2022-11-23 11:01:30.078] [info] Executing the analyses from 0.0 to 0.075...
+[2022-11-23 11:01:30.257] [info] PointKinematics.end: Finalizing analysis PointKinematics.
+[2022-11-23 11:01:30.257] [info] PointKinematics.end: Finalizing analysis PointKinematics.
+[2022-11-23 11:01:30.257] [info] Printing results of investigation PK_150 to C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/cmu_dataset\150\osim_results\Models\PK

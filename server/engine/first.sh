@@ -1,5 +1,6 @@
 #!/bin/bash
 for n in Subj03 Subj04 Subj05 Subj06 Subj07 Subj08;
+# for n in 150;
 do
 	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/cmu_dataset/$n/osim_results" ]; then	
 		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/cmu_dataset/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/cmu_dataset/$n"

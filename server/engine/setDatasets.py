@@ -1,7 +1,7 @@
 import os
 import shutil
 import json
-
+import pandas as pd
 
 path_main = os.getcwd()
 path_server = os.path.dirname(path_main)
@@ -14,7 +14,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'cmu_dataset'
+dataset = 'myer_dataset'
 
 if dataset == 'cmu_dataset':
     
@@ -349,3 +349,69 @@ elif dataset == 'balance_dataset':
                 path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
                 shutil.copy2(path_generic_trc, path_generic_trc_end)
             
+elif dataset == 'myer_dataset':
+    
+    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/myer_dataset_cleaned'
+    
+    # path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/myer_dataset'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+    
+    
+    pathDemographics = os.path.join(path_original_dataset, 'demographics.xlsx')
+    
+    demographics = pd.read_excel(pathDemographics, engine='openpyxl')
+    
+    folders = ['PreTesting_2017_fall']
+    
+    for folder in folders:
+        pathFolder = os.path.join(path_original_dataset, folder)
+        
+        for subject in os.listdir(pathFolder):
+            if os.path.isdir(os.path.join(pathFolder, subject)):
+                
+                pathSubject = os.path.join(pathFolder, subject)                
+                
+                # Get mass and height
+                ID = subject.split("_")[0].lower()                
+                massKg = demographics.loc[demographics['ID'].str.lower() == ID.lower()]['Weight'].to_numpy()[0]
+                heightM = demographics.loc[demographics['ID'].str.lower() == ID.lower()]['Height'].to_numpy()[0]/100
+                
+                infoSubject = {'massKg': massKg,
+                               'heightM': heightM}
+                
+                # Create new subject folder
+                subject_clean = ID
+                path_subject = os.path.join(path_clean_dataset, subject_clean)
+                os.makedirs(path_subject, exist_ok=True)
+        
+                # Copy generic model
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+                path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+                shutil.copy2(path_generic_model, path_generic_model_end)
+                
+                # Dump demographics
+                outfile = os.path.join(path_subject, '_subject.json')
+                subject_data = {'massKg': infoSubject['massKg'],
+                                'heightM': infoSubject['heightM'],
+                                'sex': 'unknowm',
+                                'skeletonPreset': 'custom'}
+                with open(outfile, "w") as outfile:
+                    json.dump(subject_data, outfile)
+                    
+                # Re-organize marker data            
+                path_original_subject = os.path.join(path_original_dataset, subject)
+                path_trials = os.path.join(path_subject, 'trials')
+                
+                
+                os.makedirs(path_trials, exist_ok=True)
+                for file in os.listdir(path_original_subject):
+                    if not '.trc' in file:
+                        continue
+                    
+                    path_trial = os.path.join(path_trials, file[:-12])
+                    os.makedirs(path_trial, exist_ok=True)
+                    
+                    path_generic_trc = os.path.join(path_original_subject, file)
+                    path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                    shutil.copy2(path_generic_trc, path_generic_trc_end)
