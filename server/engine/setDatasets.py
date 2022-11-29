@@ -381,12 +381,12 @@ elif dataset == 'myer_dataset':
                                'heightM': heightM}
                 
                 # Create new subject folder
-                subject_clean = ID
-                path_subject = os.path.join(path_clean_dataset, folder, subject_clean)
+                # subject_clean = ID
+                path_subject = os.path.join(path_clean_dataset, folder, subject)
                 os.makedirs(path_subject, exist_ok=True)
         
                 # Copy generic model
-                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers_noArms.osim')
                 path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
                 shutil.copy2(path_generic_model, path_generic_model_end)
                 

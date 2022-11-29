@@ -1,5 +1,5 @@
 #!/bin/bash
-for n in 102;
+for n in 083;
 # for n in 150;
 do
 	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/cmu_dataset/$n/osim_results" ]; then	
@@ -15,7 +15,7 @@ do
 	
 	# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/balance_dataset/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/balance_dataset_cleaned/$n/osim_results"
 	
-	sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/myer_dataset/PreTesting_2017_fall/anmt$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/myer_dataset_cleaned/PreTesting_2017_fall/ANMT$n_Base_08_30_2017"
+	sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/myer_dataset/PreTesting_2017_fall/anmt$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/myer_dataset_cleaned/PreTesting_2017_fall/ANMT$n_Base_08_17_2017"
 	
 	
 done
