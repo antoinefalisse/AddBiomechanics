@@ -1072,7 +1072,7 @@ if __name__ == "__main__":
             
     elif dataset == 'myer_dataset':
         
-        session = 'PreTesting_2017_fall'
+        session = 'PreTesting_2018_summer'
     
         path_dataset = os.path.join(path_data, dataset, session)
         subjects = []

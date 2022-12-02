@@ -362,7 +362,7 @@ elif dataset == 'myer_dataset':
     
     demographics = pd.read_excel(pathDemographics, engine='openpyxl')
     
-    folders = ['PreTesting_2017_fall']
+    folders = ['PreTesting_2019_summer']
     
     for folder in folders:
         pathFolder = os.path.join(path_original_dataset, folder)
