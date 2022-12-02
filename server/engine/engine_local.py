@@ -1071,8 +1071,12 @@ if __name__ == "__main__":
             processLocalSubjectFolder(pathSubject)
             
     elif dataset == 'myer_dataset':
+
+        folders = ['PreTesting_2017_fall_VR', 'PreTesting_2017_summer_VR', 
+               'PreTesting_2018_summer_VR', 'PreTesting_2019_fall_VR', 
+               'PreTesting_2019_summer_VR']
         
-        session = 'PreTesting_2018_summer'
+        session = folders[4]
     
         path_dataset = os.path.join(path_data, dataset, session)
         subjects = []

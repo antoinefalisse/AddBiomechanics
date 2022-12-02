@@ -12,7 +12,7 @@ path_main = os.getcwd()
 dataDir = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/'
 
 # Pick dataset
-dataset = 'balance_dataset_cleaned'
+dataset = 'myer_dataset_cleaned'
 
 if dataset == 'cmu_dataset':
     
@@ -173,6 +173,96 @@ elif dataset == 'balance_dataset_cleaned':
                 cmd = 'opensim-cmd run-tool Models/rescaling_setup.xml'
                 os.system(cmd)
                 os.chdir(path_main)
+                
+elif dataset == 'myer_dataset_cleaned':
+    
+    # 'PreTesting_2017_fall'
+    # sessions = ['PreTesting_2017_summer', 'PreTesting_2018_summer', 'PreTesting_2019_fall', 'PreTesting_2019_summer']
+    
+    sessions = ['PreTesting_2019_summer']
+    
+    marker_set_fixed = ['R.Shoulder', 'L.Shoulder', 'Sternum', 'L.ASIS', 'R.ASIS', 'Sacrum', 'R.Knee',
+                        'R.Heel', 'R.Toe', 'R.LateralFoot', 'R.PosteriorFoot', 'L.Knee',
+                        'L.Heel', 'L.Toe', 'L.LateralFoot', 'L.PosteriorFoot', 'L.Ankle', 'R.Ankle']
+    
+    for session in sessions:
+        
+        pathSession = os.path.join(dataDir, dataset, session)
+        
+        subjects = []
+        for subject in os.listdir(pathSession): 
+            
+            if not 'anmt' in subject.lower():
+                continue
+            
+            if 'anmt107' in subject.lower():
+                continue
+            
+            pathSubject = os.path.join(pathSession, subject)            
+            pathResults = os.path.join(pathSubject, 'osim_results')
+            if not os.path.exists(os.path.join(pathResults, 'Models', 'optimized_scale_and_markers.osim')):
+                os.chdir(pathResults)
+                cmd = 'opensim-cmd run-tool Models/rescaling_setup.xml'
+                os.system(cmd)
+                os.chdir(path_main)
+            
+            subjects.append(subject)
+            
+            pathTRC = os.path.join(pathResults, 'MarkerData')
+            pathIK = os.path.join(pathResults, 'IK')
+            
+            count = 0
+            for file in os.listdir(pathTRC):
+                
+                if not '.trc' in file:
+                    continue
+                
+                # Check marker error
+                filename = file[:-4] + '_ik_per_marker_error_report.csv'
+                pathMarkerError = os.path.join(pathIK, filename)
+                marker_error_all = pd.read_csv(pathMarkerError)
+                
+                marker_error = np.zeros((marker_error_all.shape[0], len(marker_set_fixed)))
+                
+                for m, marker in enumerate(marker_set_fixed):
+                    if marker in marker_error_all:
+                        marker_error[:, m] = marker_error_all[marker]
+                    else:
+                        # print("Marker {} not in csv report".format(marker))
+                        marker_error[:, m] = np.nan
+                    
+                marker_error_metrics = {}
+                marker_error_metrics['mean_frames'] = np.nanmean(marker_error, axis=1)
+                marker_error_metrics['std_frames'] = np.nanstd(marker_error, axis=1)
+                marker_error_metrics['mean_all'] = np.nanmean(marker_error_metrics['mean_frames'])
+                marker_error_metrics['std_frames'] = np.nanstd(marker_error_metrics['mean_frames'])
+                
+                marker_error_metrics['max_frames'] = np.max(marker_error, axis=1)
+                marker_error_metrics['max_all'] = np.max(marker_error_metrics['max_frames'])
+                
+                if marker_error_metrics['mean_all'] > 0.025:
+                    print("Mean error for subject {}, trial {} is {} mm".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
+                    # f.write("Mean error for subject {}, trial {} is {} mm\n".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
+                    count += 1
+                    # rename file
+                    pathFile = os.path.join(pathIK, file[:-4] + '_ik.mot')
+                    pathFile2 = os.path.join(pathIK, file[:-4] + '_ik_error_larger_3cm.mot')
+                    pathFileEnd = os.path.join(pathIK, file[:-4] + '_ik_error_larger_25mm.mot')
+                    if not os.path.exists(pathFileEnd):
+                        if os.path.exists(pathFile):
+                            os.rename(pathFile, pathFileEnd)
+                        else:
+                            os.rename(pathFile2, pathFileEnd)
+                    
+            if count == len(os.listdir(pathTRC)):
+                print('Only bad trials for subject {}'.format(subject))
+                # f.write("Only bad trials for subject {}\n".format(subject))
+                    
+                test = 1
+            
+            
+        
+        
                 
                     
                     

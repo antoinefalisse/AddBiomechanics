@@ -361,8 +361,10 @@ elif dataset == 'myer_dataset':
     pathDemographics = os.path.join(path_original_dataset, 'demographics.xlsx')
     
     demographics = pd.read_excel(pathDemographics, engine='openpyxl')
-    
-    folders = ['PreTesting_2019_summer']
+
+    folders = ['PreTesting_2017_fall_VR', 'PreTesting_2017_summer_VR', 
+               'PreTesting_2018_summer_VR', 'PreTesting_2019_fall_VR', 
+               'PreTesting_2019_summer_VR']
     
     for folder in folders:
         pathFolder = os.path.join(path_original_dataset, folder)
@@ -386,7 +388,12 @@ elif dataset == 'myer_dataset':
                 os.makedirs(path_subject, exist_ok=True)
         
                 # Copy generic model
-                path_generic_model = os.path.join(path_original_dataset, 'model_markers_noArms.osim')
+                if "_VR" in folder:
+                    modelName = 'model_markers.osim'
+                else:
+                    modelName = 'model_markers_noArms.osim'
+
+                path_generic_model = os.path.join(path_original_dataset, modelName)
                 path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
                 shutil.copy2(path_generic_model, path_generic_model_end)
                 
