@@ -418,3 +418,97 @@ elif dataset == 'myer_dataset':
                     path_generic_trc = os.path.join(path_original_subject, file)
                     path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
                     shutil.copy2(path_generic_trc, path_generic_trc_end)
+                    
+elif dataset == 'hamstrings_dataset':
+    
+    infoSubjects = {'Sub_01': {'massKg': 64.1,
+                             'heightM': 1.70,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'Sub_02': {'massKg': 65.5,
+                             'heightM': 1.80,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'Sub_03': {'massKg': 82.0,
+                             'heightM': 1.80,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'Sub_04': {'massKg': 69.5,
+                             'heightM': 1.70,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'Sub_05': {'massKg': 70.0,
+                             'heightM': 1.80,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'Sub_06': {'massKg': 69.0,
+                             'heightM': 1.80,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'Sub_07': {'massKg': 74.0,
+                             'heightM': 1.80,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'Sub_08': {'massKg': 84.5,
+                             'heightM': 1.90,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'Sub_09': {'massKg': 70.0,
+                             'heightM': 1.80,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'Sub_10': {'massKg': 95.5,
+                             'heightM': 2.00,
+                             'sex': 'male',
+                             'model': 'normal'}}
+    
+    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/hamstrings_dataset'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):
+            
+            if infoSubjects[subject]['model'] == 'exclude':
+                print('Exclude subject {}'.format(subject))
+                continue
+            
+            # Create new subject folder
+            path_subject = os.path.join(path_clean_dataset, subject)
+            os.makedirs(path_subject, exist_ok=True)
+    
+            # Copy generic model
+            if infoSubjects[subject]['model'] == 'normal':
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+            else:
+                raise ValueError("not existing")
+            path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+            shutil.copy2(path_generic_model, path_generic_model_end)
+            
+            # Dump generic demographics
+            outfile = os.path.join(path_subject, '_subject.json')
+            subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                            'heightM': infoSubjects[subject]['heightM'],
+                            'sex': infoSubjects[subject]['sex'],
+                            'skeletonPreset': 'custom'}
+            with open(outfile, "w") as outfile:
+                json.dump(subject_data, outfile)
+                
+            # Re-organize marker data            
+            path_original_subject = os.path.join(path_original_dataset, subject)
+            path_trials = os.path.join(path_subject, 'trials')
+            
+            
+            os.makedirs(path_trials, exist_ok=True)
+            for file in os.listdir(path_original_subject):
+                if not '.trc' in file:
+                    continue
+                
+                path_trial = os.path.join(path_trials, file[:-4])
+                os.makedirs(path_trial, exist_ok=True)
+                
+                path_generic_trc = os.path.join(path_original_subject, file)
+                path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                shutil.copy2(path_generic_trc, path_generic_trc_end)

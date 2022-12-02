@@ -176,14 +176,18 @@ elif dataset == 'balance_dataset_cleaned':
                 
 elif dataset == 'myer_dataset_cleaned':
     
-    # 'PreTesting_2017_fall'
-    # sessions = ['PreTesting_2017_summer', 'PreTesting_2018_summer', 'PreTesting_2019_fall', 'PreTesting_2019_summer']
-    
-    sessions = ['PreTesting_2019_summer']
+    # sessions = ['PreTesting_2017_fall', 'PreTesting_2017_summer', 'PreTesting_2018_summer', 'PreTesting_2019_fall', 'PreTesting_2019_summer']
+    # sessions = ['PreTesting_2017_fall_VR', 'PreTesting_2017_summer_VR', 'PreTesting_2018_summer_VR', 'PreTesting_2019_fall_VR']
+    sessions = ['PreTesting_2019_summer_VR']
+
     
     marker_set_fixed = ['R.Shoulder', 'L.Shoulder', 'Sternum', 'L.ASIS', 'R.ASIS', 'Sacrum', 'R.Knee',
                         'R.Heel', 'R.Toe', 'R.LateralFoot', 'R.PosteriorFoot', 'L.Knee',
                         'L.Heel', 'L.Toe', 'L.LateralFoot', 'L.PosteriorFoot', 'L.Ankle', 'R.Ankle']
+    
+    marker_set_fixed_VR = ['R.Shoulder', 'L.Shoulder', 'Sternum', 'L.ASIS', 'R.ASIS', 'Sacrum', 'R.Knee',
+                        'R.Heel', 'R.Toe', 'R.LateralFoot', 'R.PosteriorFoot', 'L.Knee',
+                        'L.Heel', 'L.Toe', 'L.LateralFoot', 'L.PosteriorFoot', 'L.Ankle', 'R.Ankle', 'R.Elbow', 'L.Elbow', 'R.Wrist', 'L.Wrist', 'R.Hand', 'L.MedialHand', 'R.Hand', 'L.MedialHand']
     
     for session in sessions:
         
@@ -217,14 +221,19 @@ elif dataset == 'myer_dataset_cleaned':
                 if not '.trc' in file:
                     continue
                 
+                if '_VR' in session:
+                    marker_set = marker_set_fixed_VR
+                else:
+                    marker_set = marker_set_fixed
+                
                 # Check marker error
                 filename = file[:-4] + '_ik_per_marker_error_report.csv'
                 pathMarkerError = os.path.join(pathIK, filename)
                 marker_error_all = pd.read_csv(pathMarkerError)
                 
-                marker_error = np.zeros((marker_error_all.shape[0], len(marker_set_fixed)))
+                marker_error = np.zeros((marker_error_all.shape[0], len(marker_set)))
                 
-                for m, marker in enumerate(marker_set_fixed):
+                for m, marker in enumerate(marker_set):
                     if marker in marker_error_all:
                         marker_error[:, m] = marker_error_all[marker]
                     else:
@@ -241,7 +250,7 @@ elif dataset == 'myer_dataset_cleaned':
                 marker_error_metrics['max_all'] = np.max(marker_error_metrics['max_frames'])
                 
                 if marker_error_metrics['mean_all'] > 0.025:
-                    print("Mean error for subject {}, trial {} is {} mm".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
+                    # print("Mean error for subject {}, trial {} is {} mm".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
                     # f.write("Mean error for subject {}, trial {} is {} mm\n".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
                     count += 1
                     # rename file
