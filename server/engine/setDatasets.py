@@ -571,6 +571,11 @@ elif dataset == 'multimodal_walking_dataset':
                              'heightM': 1.58,
                              'sex': 'female',
                              'model': 'normal'},
+                    # Data is in 2014016 folder, demo is 2015016. I assume they match
+                    '2014016': {'massKg': 76.0, # here
+                             'heightM': 1.69,
+                             'sex': 'female',
+                             'model': 'normal'},                    
                     '2014019': {'massKg': 73.8,
                              'heightM': 1.76,
                              'sex': 'female',
@@ -665,10 +670,6 @@ elif dataset == 'multimodal_walking_dataset':
                              'model': 'normal'},
                     '2015015': {'massKg': 68.0,
                              'heightM': 1.73,
-                             'sex': 'female',
-                             'model': 'normal'},
-                    '2015016': {'massKg': 76.0,
-                             'heightM': 1.69,
                              'sex': 'female',
                              'model': 'normal'},
                     '2015017': {'massKg': 60.5,
