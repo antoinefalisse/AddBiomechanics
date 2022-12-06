@@ -13,3 +13,5 @@ server/data/cmu_dataset/*
 server/data/cycling_dataset/*
 server/data/balance_dataset/*
 server/data/myer_dataset/*
+server/data/hamstrings_dataset/*
+server/data/multimodal_walking_dataset/*

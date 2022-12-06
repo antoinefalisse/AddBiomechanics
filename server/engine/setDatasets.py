@@ -14,7 +14,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'myer_dataset'
+dataset = 'hamstrings_dataset'
 
 if dataset == 'cmu_dataset':
     
