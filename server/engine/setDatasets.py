@@ -14,7 +14,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'hamstrings_dataset'
+dataset = 'multimodal_walking_dataset'
 
 if dataset == 'cmu_dataset':
     
@@ -467,6 +467,260 @@ elif dataset == 'hamstrings_dataset':
                              'model': 'normal'}}
     
     path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/hamstrings_dataset'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):
+            
+            if infoSubjects[subject]['model'] == 'exclude':
+                print('Exclude subject {}'.format(subject))
+                continue
+            
+            # Create new subject folder
+            path_subject = os.path.join(path_clean_dataset, subject)
+            os.makedirs(path_subject, exist_ok=True)
+    
+            # Copy generic model
+            if infoSubjects[subject]['model'] == 'normal':
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+            else:
+                raise ValueError("not existing")
+            path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+            shutil.copy2(path_generic_model, path_generic_model_end)
+            
+            # Dump generic demographics
+            outfile = os.path.join(path_subject, '_subject.json')
+            subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                            'heightM': infoSubjects[subject]['heightM'],
+                            'sex': infoSubjects[subject]['sex'],
+                            'skeletonPreset': 'custom'}
+            with open(outfile, "w") as outfile:
+                json.dump(subject_data, outfile)
+                
+            # Re-organize marker data            
+            path_original_subject = os.path.join(path_original_dataset, subject)
+            path_trials = os.path.join(path_subject, 'trials')
+            
+            
+            os.makedirs(path_trials, exist_ok=True)
+            for file in os.listdir(path_original_subject):
+                if not '.trc' in file:
+                    continue
+                
+                path_trial = os.path.join(path_trials, file[:-4])
+                os.makedirs(path_trial, exist_ok=True)
+                
+                path_generic_trc = os.path.join(path_original_subject, file)
+                path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                shutil.copy2(path_generic_trc, path_generic_trc_end)
+                
+elif dataset == 'multimodal_walking_dataset':
+    
+    infoSubjects = {'2014001': {'massKg': 67.0,
+                             'heightM': 1.66,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014002': {'massKg': 65.4,
+                             'heightM': 1.64,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014003': {'massKg': 50.0,
+                             'heightM': 1.56,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014004': {'massKg': 72.5,
+                             'heightM': 1.77,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014005': {'massKg': 73.5,
+                             'heightM': 1.83,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014006': {'massKg': 73.0,
+                             'heightM': 1.76,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014007': {'massKg': 65.0,
+                             'heightM': 1.69,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014008': {'massKg': 57.1,
+                             'heightM': 1.66,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014009': {'massKg': 86.0,
+                             'heightM': 1.88,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014011': {'massKg': 63.4,
+                             'heightM': 1.80,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014013': {'massKg': 61.3,
+                             'heightM': 1.70,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014014': {'massKg': 92.0,
+                             'heightM': 1.80,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014015': {'massKg': 67.0,
+                             'heightM': 1.58,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014019': {'massKg': 73.8,
+                             'heightM': 1.76,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014022': {'massKg': 59.8,
+                             'heightM': 1.71,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014024': {'massKg': 87.5,
+                             'heightM': 1.92,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014025': {'massKg': 80.5,
+                             'heightM': 1.66,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014029': {'massKg': 89.9,
+                             'heightM': 1.89,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014030': {'massKg': 60.7,
+                             'heightM': 1.70,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014031': {'massKg': 67.2,
+                             'heightM': 1.77,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014033': {'massKg': 63.5,
+                             'heightM': 1.60,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014034': {'massKg': 89.6,
+                             'heightM': 1.84,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014040': {'massKg': 56.5,
+                             'heightM': 1.55,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014046': {'massKg': 61.8,
+                             'heightM': 1.65,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014048': {'massKg': 61.5,
+                             'heightM': 1.64,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014049': {'massKg': 72.2,
+                             'heightM': 1.74,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014050': {'massKg': 61.9,
+                             'heightM': 1.64,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2014051': {'massKg': 88.0,
+                             'heightM': 1.91,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014052': {'massKg': 79.5,
+                             'heightM': 1.82,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2014053': {'massKg': 62.8,
+                             'heightM': 1.72,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2015002': {'massKg': 74.0,
+                             'heightM': 1.74,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015003': {'massKg': 87.2,
+                             'heightM': 1.77,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015004': {'massKg': 62.0,
+                             'heightM': 1.70,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2015005': {'massKg': 89.4,
+                             'heightM': 1.90,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015007': {'massKg': 60.2,
+                             'heightM': 1.66,
+                             'sex': 'female',
+                             'model': 'normal'},                    
+                    '2015013': {'massKg': 73.0,
+                             'heightM': 1.69,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2015015': {'massKg': 68.0,
+                             'heightM': 1.73,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2015016': {'massKg': 76.0,
+                             'heightM': 1.69,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2015017': {'massKg': 60.5,
+                             'heightM': 1.67,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2015020': {'massKg': 95.0,
+                             'heightM': 1.79,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015021': {'massKg': 58.0,
+                             'heightM': 1.69,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2015026': {'massKg': 51.5,
+                             'heightM': 1.71,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    '2015027': {'massKg': 65.5,
+                             'heightM': 1.72,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015030': {'massKg': 86.0,
+                             'heightM': 1.87,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015032': {'massKg': 50.8,
+                             'heightM': 1.72,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015035': {'massKg': 81.5,
+                             'heightM': 1.77,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015037': {'massKg': 66.1,
+                             'heightM': 1.76,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015041': {'massKg': 74.8,
+                             'heightM': 1.88,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015042': {'massKg': 98.0,
+                             'heightM': 1.83,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    '2015043': {'massKg': 74.0,
+                             'heightM': 1.78,
+                             'sex': 'male',
+                             'model': 'normal'}}
+    
+    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/multimodal_walking_dataset'
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)
     
