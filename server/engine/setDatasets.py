@@ -14,7 +14,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'running_leuven1_dataset'
+dataset = 'running_leuven2_dataset'
 
 if dataset == 'cmu_dataset':
     
@@ -938,6 +938,136 @@ elif dataset == 'running_leuven1_dataset':
                              'model': 'normal'}}
     
     path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/running_leuven1_dataset'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):
+            
+            if infoSubjects[subject]['model'] == 'exclude':
+                print('Exclude subject {}'.format(subject))
+                continue
+            
+            # Create new subject folder
+            path_subject = os.path.join(path_clean_dataset, subject)
+            os.makedirs(path_subject, exist_ok=True)
+    
+            # Copy generic model
+            if infoSubjects[subject]['model'] == 'normal':
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+            else:
+                raise ValueError("not existing")
+            path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+            shutil.copy2(path_generic_model, path_generic_model_end)
+            
+            # Dump generic demographics
+            outfile = os.path.join(path_subject, '_subject.json')
+            subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                            'heightM': infoSubjects[subject]['heightM'],
+                            'sex': infoSubjects[subject]['sex'],
+                            'skeletonPreset': 'custom'}
+            with open(outfile, "w") as outfile:
+                json.dump(subject_data, outfile)
+                
+            # Re-organize marker data            
+            path_original_subject = os.path.join(path_original_dataset, subject)
+            path_trials = os.path.join(path_subject, 'trials')
+            
+            
+            os.makedirs(path_trials, exist_ok=True)
+            for file in os.listdir(path_original_subject):
+                if not '.trc' in file:
+                    continue
+                
+                path_trial = os.path.join(path_trials, file[:-4])
+                os.makedirs(path_trial, exist_ok=True)
+                
+                path_generic_trc = os.path.join(path_original_subject, file)
+                path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                shutil.copy2(path_generic_trc, path_generic_trc_end)
+                
+elif dataset == 'running_leuven2_dataset':
+    
+    infoSubjects = {'sub_00': {'massKg': 82.7,
+                             'heightM': 1.83,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_01': {'massKg': 49.4,
+                             'heightM': 1.68,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_02': {'massKg': 69.1,
+                             'heightM': 1.81,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_03': {'massKg': 63.7,
+                             'heightM': 1.74,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_04': {'massKg': 49.4,
+                             'heightM': 1.67,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_05': {'massKg': 76.1,
+                             'heightM': 1.78,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_06': {'massKg': 63.4,
+                             'heightM': 1.72,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_07': {'massKg': 59.2,
+                             'heightM': 1.72,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_08': {'massKg': 80.3,
+                             'heightM': 1.84,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_09': {'massKg': 61.7,
+                             'heightM': 1.82,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_10': {'massKg': 64.6,
+                             'heightM': 1.77,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_11': {'massKg': 63.8,
+                             'heightM': 1.76,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_12': {'massKg': 77.4,
+                             'heightM': 1.88,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_13': {'massKg': 68.0,
+                             'heightM': 1.85,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_14': {'massKg': 78.7,
+                             'heightM': 1.87,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_15': {'massKg': 70.5,
+                             'heightM': 1.85,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_16': {'massKg': 66.3,
+                             'heightM': 1.74,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_17': {'massKg': 71.6,
+                             'heightM': 1.81,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'sub_18': {'massKg': 90.7,
+                             'heightM': 1.93,
+                             'sex': 'unknown',
+                             'model': 'normal'}}
+    
+    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/running_leuven2_dataset'
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)
     
