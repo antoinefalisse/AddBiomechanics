@@ -12,7 +12,7 @@ path_main = os.getcwd()
 dataDir = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/'
 
 # Pick dataset
-dataset = 'hamstrings_dataset'
+dataset = 'multimodal_walking_dataset'
 
 if dataset == 'cmu_dataset':
     
@@ -349,6 +349,105 @@ elif dataset == 'hamstrings_dataset':
                 # f.write("Only bad trials for subject {}\n".format(subject))
                     
                 test = 1
+                
+elif dataset == 'multimodal_walking_dataset':
+    
+    # processed_subjects = ['Sub_01', 'Sub_02', 'Sub_03', 'Sub_04', 'Sub_05', 'Sub_06', 'Sub_07', 'Sub_08', 'Sub_09', 'Sub_10']
+    
+    marker_set_fixed = ['R_IAS', 'L_IAS', 'R_IPS', 'L_IPS', 'R_FLE', 'R_FAL', 'R_FM1',
+                        'R_FM2', 'R_FM5', 'R_FCC', 'L_FLE', 'L_FAL', 'L_FM1', 'L_FM2',
+                        'L_FM5', 'L_FCC', 'R_SAE', 'L_SAE', 'CV7', 
+                        'TV10', 'SJN', 'SXS', 'R_HLE', 'R_HME', 'R_RSP', 'R_UHE', 'L_HLE',
+                        'L_HME', 'L_RSP', 'L_UHE', ]
+    
+    path_clean_dataset = os.path.join(dataDir, dataset)
+    
+    # Loop over subjects
+    count = 0
+    count1 = 0
+    # print(os.listdir(path_clean_dataset))
+    # with open('Report_rmses_cycling.txt', 'w') as f:
+    subjects = []
+    for subject in os.listdir(path_clean_dataset):
+        
+        if '20' not in subject:
+            continue
+        subjects.append(subject)
+        
+        # if subject in processed_subjects:
+            # print("Processing subject {}".format(subject))
+            
+        pathSubject = os.path.join(path_clean_dataset, subject)            
+        pathResults = os.path.join(pathSubject, 'osim_results')
+        if not os.path.exists(os.path.join(pathResults, 'Models', 'optimized_scale_and_markers.osim')):
+            os.chdir(pathResults)
+            cmd = 'opensim-cmd run-tool Models/rescaling_setup.xml'
+            os.system(cmd)
+            os.chdir(path_main)
+            
+            
+        pathC3D = os.path.join(pathResults, 'MarkerData') 
+        pathIK = os.path.join(pathResults, 'IK')
+        
+        count = 0
+        for file in os.listdir(pathC3D):
+            
+            if not '.trc' in file:
+                continue
+            
+            # Check marker error
+            filename = file[:-4] + '_ik_per_marker_error_report.csv'
+            pathMarkerError = os.path.join(pathIK, filename)
+            
+            os.listdir(pathIK)
+            
+            # Bug in csv, quick fix.
+            tmp0 = pd.read_csv(pathMarkerError, header=None, nrows=1)
+            tmp1 = tmp0.loc[0, :].values.tolist()            
+            tmp2 = pd.read_csv(pathMarkerError, header=None, nrows=1, skiprows=1)
+            tmp3 = tmp2.loc[0, :].values.tolist()            
+            headers = tmp1 + tmp3            
+            data = pd.read_csv(pathMarkerError, header=None, skiprows=2)            
+            marker_error_all = pd.DataFrame(data=data.to_numpy(), columns=(headers))
+            
+            marker_error = np.zeros((marker_error_all.shape[0], len(marker_set_fixed)))
+            
+            for m, marker in enumerate(marker_set_fixed):
+                if marker in marker_error_all:
+                    marker_error[:, m] = marker_error_all[marker]
+                else:
+                    # print("Marker {} not in csv report".format(marker))
+                    marker_error[:, m] = np.nan
+                
+            marker_error_metrics = {}
+            marker_error_metrics['mean_frames'] = np.nanmean(marker_error, axis=1)
+            marker_error_metrics['std_frames'] = np.nanstd(marker_error, axis=1)
+            marker_error_metrics['mean_all'] = np.nanmean(marker_error_metrics['mean_frames'])
+            marker_error_metrics['std_frames'] = np.nanstd(marker_error_metrics['mean_frames'])
+            
+            marker_error_metrics['max_frames'] = np.max(marker_error, axis=1)
+            marker_error_metrics['max_all'] = np.max(marker_error_metrics['max_frames'])
+            
+            if marker_error_metrics['mean_all'] > 0.025:
+                print("Mean error for subject {}, trial {} is {} mm".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
+                # f.write("Mean error for subject {}, trial {} is {} mm\n".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
+                count += 1
+                # rename file
+                pathFile = os.path.join(pathIK, file[:-4] + '_ik.mot')
+                pathFile2 = os.path.join(pathIK, file[:-4] + '_ik_error_larger_3cm.mot')
+                pathFileEnd = os.path.join(pathIK, file[:-4] + '_ik_error_larger_25mm.mot')
+                if not os.path.exists(pathFileEnd):
+                    if os.path.exists(pathFile):
+                        os.rename(pathFile, pathFileEnd)
+                    else:
+                        os.rename(pathFile2, pathFileEnd)
+                
+        if count == len(os.listdir(pathC3D)):
+            print('Only bad trials for subject {}'.format(subject))
+            # f.write("Only bad trials for subject {}\n".format(subject))
+                
+            test = 1
+                
                 
             
             

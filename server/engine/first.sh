@@ -130,13 +130,26 @@
 	
 # done
 
-for n in Sub_01 Sub_02 Sub_03 Sub_04 Sub_05 Sub_06 Sub_07 Sub_08 Sub_09 Sub_10 ;
+# for n in Sub_01 Sub_02 Sub_03 Sub_04 Sub_05 Sub_06 Sub_07 Sub_08 Sub_09 Sub_10 ;
+
+# do
+	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/hamstrings_dataset/$n/osim_results" ]; then
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/hamstrings_dataset/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/hamstrings_dataset/$n"
+		
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/hamstrings_dataset/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/hamstrings_dataset/$n/osim_results"
+	# fi
+	
+# done
+
+
+
+for n in 2014001 2014002 2014003 2014004 2014005 2014006 2014007 2014008 2014009 2014011 2014013 2014014 2014015 2014016 2014019 2014022 2014024 2014025 2014029 2014030 2014031 2014033 2014034 2014040 2014046 2014048 2014049 2014050 2014051 2014052 2014053 2015002 2015003 2015004 2015005 2015007 2015013 2015015 2015017 2015020 2015021 2015026 2015027 2015030 2015032 2015035 2015041 2015042 2015043;
 
 do
-	if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/hamstrings_dataset/$n/osim_results" ]; then
-		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/hamstrings_dataset/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/hamstrings_dataset/$n"
+	if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/multimodal_walking_dataset/$n/osim_results" ]; then
+		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/multimodal_walking_dataset/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/multimodal_walking_dataset/$n"
 		
-		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/hamstrings_dataset/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/hamstrings_dataset/$n/osim_results"
+		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/multimodal_walking_dataset/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/multimodal_walking_dataset/$n/osim_results"
 	fi
 	
 done
