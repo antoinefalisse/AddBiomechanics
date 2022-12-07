@@ -14,7 +14,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'multimodal_walking_dataset'
+dataset = 'parameter_estimation_dataset'
 
 if dataset == 'cmu_dataset':
     
@@ -717,7 +717,105 @@ elif dataset == 'multimodal_walking_dataset':
                              'sex': 'male',
                              'model': 'normal'}}
     
-    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/multimodal_walking_dataset/dataset'
+    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/multimodal_walking_dataset'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):
+            
+            if infoSubjects[subject]['model'] == 'exclude':
+                print('Exclude subject {}'.format(subject))
+                continue
+            
+            # Create new subject folder
+            path_subject = os.path.join(path_clean_dataset, subject)
+            os.makedirs(path_subject, exist_ok=True)
+    
+            # Copy generic model
+            if infoSubjects[subject]['model'] == 'normal':
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+            else:
+                raise ValueError("not existing")
+            path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+            shutil.copy2(path_generic_model, path_generic_model_end)
+            
+            # Dump generic demographics
+            outfile = os.path.join(path_subject, '_subject.json')
+            subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                            'heightM': infoSubjects[subject]['heightM'],
+                            'sex': infoSubjects[subject]['sex'],
+                            'skeletonPreset': 'custom'}
+            with open(outfile, "w") as outfile:
+                json.dump(subject_data, outfile)
+                
+            # Re-organize marker data            
+            path_original_subject = os.path.join(path_original_dataset, subject)
+            path_trials = os.path.join(path_subject, 'trials')
+            
+            
+            os.makedirs(path_trials, exist_ok=True)
+            for file in os.listdir(path_original_subject):
+                if not '.trc' in file:
+                    continue
+                
+                path_trial = os.path.join(path_trials, file[:-4])
+                os.makedirs(path_trial, exist_ok=True)
+                
+                path_generic_trc = os.path.join(path_original_subject, file)
+                path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                shutil.copy2(path_generic_trc, path_generic_trc_end)
+                
+elif dataset == 'parameter_estimation_dataset':
+    
+    infoSubjects = {'sub_00': {'massKg': 64.8,
+                             'heightM': 1.76,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'sub_01': {'massKg': 65.5,
+                             'heightM': 1.78,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'sub_02': {'massKg': 71.7,
+                             'heightM': 1.73,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'sub_03': {'massKg': 70.8,
+                             'heightM': 1.80,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'sub_04': {'massKg': 64.2,
+                             'heightM': 1.69,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'sub_05': {'massKg': 60.1,
+                             'heightM': 1.70,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'sub_06': {'massKg': 73.6,
+                             'heightM': 1.75,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'sub_07': {'massKg': 66.3,
+                             'heightM': 1.78,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'sub_08': {'massKg':81.0,
+                             'heightM': 1.77,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'sub_09': {'massKg': 78.4,
+                             'heightM': 1.90,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'sub_10': {'massKg': 73.4,
+                             'heightM': 1.75,
+                             'sex': 'female',
+                             'model': 'normal'}}
+    
+    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/parameter_estimation_dataset'
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)
     
