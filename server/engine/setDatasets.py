@@ -14,7 +14,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'running_leuven2_dataset'
+dataset = 'running_leuven1_dataset'
 
 if dataset == 'cmu_dataset':
     
