@@ -18,3 +18,5 @@ server/data/multimodal_walking_dataset/*
 server/data/parameter_estimation_dataset/*
 server/data/running_leuven1_dataset/*
 server/data/running_leuven2_dataset/*
+server/data/inclined_walking_dataset/*
+server/data/toeheel_walking_dataset/*
