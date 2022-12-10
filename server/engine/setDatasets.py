@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'inclined_walking_dataset'
+dataset = 'toeheel_walking_dataset'
 
 def strip(y):
     return y.replace(" ", "")
