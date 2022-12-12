@@ -133,6 +133,7 @@ const MocapTrialRowView = observer((props: MocapTrialRowViewProps) => {
         <TagEditor
           tagSet='trial'
           tags={tagList}
+          readonly={props.cursor.dataIsReadonly()}
           onTagsChanged={(newTags) => {
             tagsFile.setAttribute("tags", newTags);
           }}
@@ -778,6 +779,26 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
     </>;
   }
   else if (status === "processing") {
+    let advancedOptions = null;
+    if (props.cursor.canEdit()) {
+      advancedOptions = (
+        <div className="mt-2 mb-2">
+          <Dropdown>
+            <Dropdown.Toggle size="sm" variant="light" id="dropdown-basic">
+              Advanced Options
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu>
+              <Dropdown.Item variant="danger" onClick={() => {
+                if (window.confirm("DANGER! Only do this if your processing server has crashed. You can check under \"Processing Server Status\" to make sure. Are you fairly confident your processing server crashed?")) {
+                  props.cursor.requestReprocessSubject();
+                }
+              }}>DANGER: Reprocess now, ignoring current processing attempt</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </div>
+      )
+    }
     statusBadge = <span className="badge bg-warning">Processing</span>;
     statusDetails =
       <>
@@ -792,6 +813,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
             replace
           >Watch Live Processing Logs</Link>
         </div>
+        {advancedOptions}
         <div>
           We'll send you an email when your data has finished processing!
         </div>
@@ -809,8 +831,13 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
     }
   }
   else if (status === "waiting") {
-    statusBadge = <span className="badge bg-secondary">Waiting for server {props.cursor.getQueueOrder()}</span>;
+    statusBadge = <span className="badge bg-secondary">Waiting for server</span>;
     statusDetails = <div>
+      <div className="mb-1">
+        <Link
+          to={"/server_status"}
+        >View Processing Server Status</Link>
+      </div>
       We'll send you an email when your data has finished processing!
     </div>
   }
@@ -965,6 +992,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
           error={footBodyNames.length != 2}
           tagSet={availableBodyList}
           tags={footBodyNames}
+          readonly={props.cursor.dataIsReadonly()}
           onTagsChanged={(newTags) => {
             props.cursor.subjectJson.setAttribute("footBodyNames", newTags);
           }}
@@ -1008,7 +1036,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
           OpenSim Model and Markerset:
         </label>
         <div className="col-md-6">
-          <select id="skeletonPreset" className="form-select mb-3" value={skeletonPreset} onChange={(e) => {
+          <select id="skeletonPreset" className="form-select mb-3" value={skeletonPreset} disabled={props.cursor.dataIsReadonly()} onChange={(e) => {
             if (e.target.value === 'custom') {
               props.cursor.markCustomOsim();
             }
@@ -1044,7 +1072,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
               <i className="mdi mdi-help-circle-outline text-muted vertical-middle" style={{ marginLeft: '5px' }}></i>
             </OverlayTrigger>
           </label>
-          <input type="number" className={"form-control" + ((heightValue < 0.1 || heightValue > 3.0) ? " is-invalid" : "")} id="heightM" value={heightValue} onChange={(e) => {
+          <input type="number" disabled={props.cursor.dataIsReadonly()} className={"form-control" + ((heightValue < 0.1 || heightValue > 3.0) ? " is-invalid" : "")} id="heightM" value={heightValue} onChange={(e) => {
             props.cursor.subjectJson.setAttribute("heightM", e.target.value);
           }} onFocus={(e) => {
             props.cursor.subjectJson.onFocusAttribute("heightM");
@@ -1083,7 +1111,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
               <i className="mdi mdi-help-circle-outline text-muted vertical-middle" style={{ marginLeft: '5px' }}></i>
             </OverlayTrigger>
           </label>
-          <input type="number" className={"form-control" + ((weightValue < 5 || weightValue > 700) ? " is-invalid" : "")} id="weightKg" value={weightValue} onChange={(e) => {
+          <input type="number" className={"form-control" + ((weightValue < 5 || weightValue > 700) ? " is-invalid" : "")} disabled={props.cursor.dataIsReadonly()} id="weightKg" value={weightValue} onChange={(e) => {
             props.cursor.subjectJson.setAttribute("massKg", e.target.value);
           }} onFocus={(e) => {
             props.cursor.subjectJson.onFocusAttribute("massKg");
@@ -1122,7 +1150,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
               <i className="mdi mdi-help-circle-outline text-muted vertical-middle" style={{ marginLeft: '5px' }}></i>
             </OverlayTrigger>
           </label>
-          <select className="form-control" id="sex" value={sexValue} onChange={(e) => {
+          <select className="form-control" id="sex" disabled={props.cursor.dataIsReadonly()} value={sexValue} onChange={(e) => {
             props.cursor.subjectJson.setAttribute("sex", e.target.value);
           }} onFocus={(e) => {
             props.cursor.subjectJson.onFocusAttribute("sex");
@@ -1144,7 +1172,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
           delay={{ show: 50, hide: 400 }}
           overlay={(props) => (
             <Tooltip id="button-tooltip" {...props}>
-              We use structured tags, instead of free form text notes, to avoid accidentally hosting Personally Identifiable Information (PII) on the platform. If you don't find the tags you need, feel free to email keenon@cs.stanford.edu and suggest new tags!
+              These tags are not used in data processing, but can help your users once the data is published. We use structured tags, instead of free form text notes, to avoid accidentally hosting Personally Identifiable Information (PII) on the platform. If you don't find the tags you need, feel free to email keenon@cs.stanford.edu and suggest new tags!
             </Tooltip>
           )}
         >
@@ -1153,6 +1181,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
         <TagEditor
           tagSet='subject'
           tags={subjectTags}
+          readonly={props.cursor.dataIsReadonly()}
           onTagsChanged={(newTags) => {
             props.cursor.subjectJson.setAttribute("subjectTags", newTags);
           }}
@@ -1216,35 +1245,39 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
               {manualIkRowHeader}
               <th className="border-0" >
                 Trial Tags
-                <Dropdown style={{ display: 'inline-block' }}>
-                  <Dropdown.Toggle className="dropdown-toggle arrow-none btn btn-light btn-xs">
-                    <i className="mdi mdi-wrench"></i>
-                  </Dropdown.Toggle>
-                  <Dropdown.Menu>
-                    <Dropdown.Item
-                      onClick={() => {
-                        navigate({ search: "?bulk-tags=add" })
-                      }}
-                    >
-                      <i className="mdi mdi-plus me-2 text-muted vertical-middle"></i>
-                      Add tags to all
-                    </Dropdown.Item>
-                    <Dropdown.Item
-                      onClick={() => {
-                        navigate({ search: "?bulk-tags=remove" })
-                      }}
-                    >
-                      <i className="mdi mdi-minus me-2 text-muted vertical-middle"></i>
-                      Remove tags from all
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown>
+                {(() => {
+                  if (!props.cursor.dataIsReadonly()) {
+                    return (<Dropdown style={{ display: 'inline-block' }}>
+                      <Dropdown.Toggle className="dropdown-toggle arrow-none btn btn-light btn-xs">
+                        <i className="mdi mdi-wrench"></i>
+                      </Dropdown.Toggle>
+                      <Dropdown.Menu>
+                        <Dropdown.Item
+                          onClick={() => {
+                            navigate({ search: "?bulk-tags=add" })
+                          }}
+                        >
+                          <i className="mdi mdi-plus me-2 text-muted vertical-middle"></i>
+                          Add tags to all
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          onClick={() => {
+                            navigate({ search: "?bulk-tags=remove" })
+                          }}
+                        >
+                          <i className="mdi mdi-minus me-2 text-muted vertical-middle"></i>
+                          Remove tags from all
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>);
+                  }
+                })()}
                 <OverlayTrigger
                   placement="right"
                   delay={{ show: 50, hide: 400 }}
                   overlay={(props) => (
                     <Tooltip id="button-tooltip" {...props}>
-                      We use structured tags, instead of free form text notes, to avoid accidentally hosting Personally Identifiable Information (PII) on the platform. If you don't find the tags you need, feel free to email keenon@cs.stanford.edu and suggest new tags!
+                      These tags are not used in data processing, but can help your users once the data is published. We use structured tags, instead of free form text notes, to avoid accidentally hosting Personally Identifiable Information (PII) on the platform. If you don't find the tags you need, feel free to email keenon@cs.stanford.edu and suggest new tags!
                     </Tooltip>
                   )}
                 >

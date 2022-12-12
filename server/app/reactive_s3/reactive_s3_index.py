@@ -5,6 +5,7 @@ import json
 import time
 import tempfile
 from typing import Dict, List, Set, Callable, Any
+import threading
 
 
 class FileMetadata:
@@ -27,18 +28,22 @@ class FileMetadata:
 class ReactiveS3Index:
     pubSub: PubSub
     files: Dict[str, FileMetadata]
+    children: Dict[str, List[str]]
     changeListeners: List[Callable]
     bucketName: str
     deployment: str
+    lock: threading.Lock
 
     def __init__(self, bucket: str, deployment: str) -> None:
         self.s3_low_level = boto3.client('s3', region_name='us-west-2')
         self.s3 = boto3.resource('s3', region_name='us-west-2')
+        self.lock = threading.Lock()
         self.bucketName = bucket
         self.deployment = deployment
         self.bucket = self.s3.Bucket(self.bucketName)
         self.pubSub = PubSub(deployment)
         self.files = {}
+        self.children = {}
         self.changeListeners = []
 
     def registerPubSub(self) -> None:
@@ -58,36 +63,77 @@ class ReactiveS3Index:
         """
         This updates the index
         """
+        self.lock.acquire()
         print('Doing full index refresh...')
+        self.files.clear()
+        self.children.clear()
         for object in self.bucket.objects.all():
             key: str = object.key
             lastModified: int = object.last_modified.timestamp() * 1000
             size: int = object.size
             file = FileMetadata(key, lastModified, size)
+            self.updateChildrenOnAddFile(key)
             self.files[key] = file
         print('Full index refresh finished!')
+        self.lock.release()
         self._onRefresh()
+
+    def updateChildrenOnAddFile(self, path: str):
+        cursor = -1
+        subPath = ''
+        while True:
+            try:
+                cursor = path.index('/', cursor+1)
+                subPath = path[:cursor]
+                # End all files/folders with a slash
+                if len(subPath) > 0 and subPath[-1] != '/':
+                    subPath += '/'
+                if subPath not in self.children:
+                    self.children[subPath] = []
+                self.children[subPath].append(path)
+            except ValueError:
+                # the slash was not found
+                break
+
+    def updateChildrenOnRemoveFile(self, path: str):
+        cursor = -1
+        subPath = ''
+        while True:
+            try:
+                cursor = path.index('/', cursor+1)
+                subPath = path[:cursor]
+                # End all files/folders with a slash
+                if len(subPath) > 0 and subPath[-1] != '/':
+                    subPath += '/'
+                if subPath in self.children and path in self.children[subPath]:
+                    self.children[subPath].remove(path)
+                    if len(self.children[subPath]) == 0:
+                        del self.children[subPath]
+            except ValueError:
+                # the slash was not found
+                break
 
     def listAllFolders(self) -> Set[str]:
         """
         This parses the different file names, and lists all virtual folders implied by the paths, along with all real folders
         """
-        folders: Set[str] = set()
-        for path in self.files:
-            cursor = -1
-            while True:
-                try:
-                    cursor = path.index('/', cursor+1)
-                    subPath = path[:cursor]
-                    # End all files/folders with a slash
-                    if len(subPath) > 0 and subPath[-1] != '/':
-                        subPath += '/'
-                    folders.add(subPath)
-                except ValueError:
-                    # the slash was not found
-                    folders.add(path)
-                    break
-        return folders
+        return set(self.children.keys())
+        # folders: Set[str] = set()
+        # for path in self.files:
+        #     cursor = -1
+        #     while True:
+        #         try:
+        #             cursor = path.index('/', cursor+1)
+        #             subPath = path[:cursor]
+        #             # End all files/folders with a slash
+        #             if len(subPath) > 0 and subPath[-1] != '/':
+        #                 subPath += '/'
+        #             folders.add(subPath)
+        #         except ValueError:
+        #             # the slash was not found
+        #             folders.add(path)
+        #             break
+        # return folders
 
     def exists(self, path: str) -> bool:
         return path in self.files
@@ -100,10 +146,22 @@ class ReactiveS3Index:
         This returns a list of all the children of a given folder
         """
         children: Dict[str, FileMetadata] = {}
-        for path in self.files:
-            if path.startswith(folder) and path != folder:
-                subPath = path[len(folder):]
-                children[subPath] = self.files[path]
+        if folder in self.children:
+            toRemove = []
+            for path in self.children[folder]:
+                if path != folder:
+                    if path in self.files:
+                        children[path[len(folder):]] = self.files[path]
+                    else:
+                        print('DATA SYNCHRONIZATION ISSUE: '+path +
+                              ' in children['+folder+'], but not in files. Removing from children['+folder+']', flush=True)
+                        toRemove.append(path)
+            for path in toRemove:
+                self.children[folder].remove(path)
+        # for path in self.files:
+        #     if path.startswith(folder) and path != folder:
+        #         subPath = path[len(folder):]
+        #         children[subPath] = self.files[path]
         return children
 
     def getImmediateChildren(self, folder: str) -> Dict[str, FileMetadata]:
@@ -183,12 +241,12 @@ class ReactiveS3Index:
         self.pubSub.sendMessage(
             self.makeTopicPubSubSafe("/UPDATE/"+bucketPath), {'key': bucketPath, 'lastModified': time.time() * 1000, 'size': len(text.encode('utf-8'))})
 
-    def uploadJSON(self, contents: Dict[str, Any]):
+    def uploadJSON(self, bucketPath: str, contents: Dict[str, Any]):
         """
         This uploads JSON back to S3
         """
         j = json.dumps(contents)
-        self.uploadText(j)
+        self.uploadText(bucketPath, j)
 
     def delete(self, bucketPath: str):
         """
@@ -196,7 +254,7 @@ class ReactiveS3Index:
         """
         if not self.exists(bucketPath):
             return bytearray()
-        self.root.s3.Object(self.bucketName, bucketPath).delete()
+        self.s3.Object(self.bucketName, bucketPath).delete()
         self.pubSub.sendMessage(
             self.makeTopicPubSubSafe("/DELETE/"+bucketPath), {'key': bucketPath})
 
@@ -245,6 +303,7 @@ class ReactiveS3Index:
         """
         We received a PubSub message telling us a file was created
         """
+        self.lock.acquire()
         body = json.loads(payload)
         key: str = body['key']
         lastModified: int = body['lastModified']
@@ -252,17 +311,25 @@ class ReactiveS3Index:
         file = FileMetadata(key, lastModified, size)
         print("onUpdate() file: "+str(file))
         self.files[key] = file
+        self.updateChildrenOnAddFile(key)
+        self.lock.release()
         self._onRefresh()
 
     def _onDelete(self, topic: str, payload: bytes) -> None:
         """
         We received a PubSub message telling us a file was deleted
         """
+        self.lock.acquire()
         body = json.loads(payload)
         key: str = body['key']
         print("onDelete() key: "+str(key))
+        anyDeleted = False
         if key in self.files:
+            self.updateChildrenOnRemoveFile(key)
             del self.files[key]
+            anyDeleted = True
+        self.lock.release()
+        if anyDeleted:
             self._onRefresh()
 
     def _onRefresh(self) -> None:

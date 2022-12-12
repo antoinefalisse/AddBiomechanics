@@ -1,13 +1,10 @@
 import { makeObservable, action, observable } from 'mobx';
-import { Auth, Storage } from "aws-amplify";
-import {
-    S3ProviderListOutput,
-    S3ProviderListOutputItem,
-} from "@aws-amplify/storage";
+import { Auth } from "aws-amplify";
 import JSZip from 'jszip';
 import RobustMqtt from './RobustMqtt';
 import { Credentials, getAmplifyUserAgent } from '@aws-amplify/core';
-import { S3Client, ListObjectsV2Command, ListObjectsV2CommandOutput } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { S3Client, ListObjectsV2Command, ListObjectsV2CommandOutput, GetObjectCommand, DeleteObjectCommand, DeleteObjectCommandOutput } from '@aws-sdk/client-s3';
 import RobustUpload from './RobustUpload';
 
 
@@ -431,6 +428,7 @@ class ReactiveCursor {
      * @param path the new path to use
      */
     setPath = (path: string) => {
+        console.log("Setting path to: "+path);
         if (path === this.path) return;
 
         // Clean up the old listeners.
@@ -796,8 +794,10 @@ class ReactiveIndex {
 
     region: string;
     bucketName: string;
-    // This is the level, in the Amplify API's, of storage this index is reflecting
-    level: 'protected' | 'public';
+
+    authenticated: boolean = false;
+    myIdentityId: string = '';
+
     // This is the prefix that's getting attached (invisibly) to the paths we send to Amplify
     // before they get forwarded to S3
     globalPrefix: string = '';
@@ -818,13 +818,14 @@ class ReactiveIndex {
     networkErrors: Map<string, string> = new Map();
     networkErrorListeners: Array<(errors: string[]) => void> = [];
 
+    s3client: Promise<S3Client>;
+
     // This is a handle on the PubSub socket object we'll use
     socket: RobustMqtt;
 
-    constructor(region: string, bucketName: string, level: 'protected' | 'public', runNetworkSetup: boolean = true, socket: RobustMqtt) {
+    constructor(region: string, bucketName: string, runNetworkSetup: boolean = true, socket: RobustMqtt) {
         this.region = region;
         this.bucketName = bucketName;
-        this.level = level;
         this.socket = socket;
 
         // We don't want to run network setup in our unit tests
@@ -832,23 +833,47 @@ class ReactiveIndex {
             this.fullRefresh();
             this.setupPubsub();
         }
+
+        this.s3client = this.createFreshS3Client();
+    }
+
+    createFreshS3Client = () => {
+        return new Promise<S3Client>((resolve, reject) => {
+            Auth.currentCredentials().then((credentials) => {
+                console.log(credentials);
+                this.authenticated = credentials.authenticated;
+                this.myIdentityId = credentials.identityId.replace("us-west-2:", "");
+
+                const INVALID_CRED = { accessKeyId: '', secretAccessKey: '' };
+                const credentialsProvider = async () => {
+                    try {
+                        const credentials = await Credentials.get();
+                        if (!credentials) return INVALID_CRED;
+                        const cred = Credentials.shear(credentials);
+                        return cred;
+                    } catch (error) {
+                        console.warn('credentials provider error', error);
+                        return INVALID_CRED;
+                    }
+                }
+
+                // Authenticated S3 client
+                resolve(new S3Client({
+                    region: this.region,
+                    // Using provider instead of a static credentials, so that if an upload task was in progress, but credentials gets
+                    // changed or invalidated (e.g user signed out), the subsequent requests will fail.
+                    credentials: credentialsProvider,
+                    customUserAgent: getAmplifyUserAgent()
+                }));
+            })
+        });
     }
 
     /**
      * If you call the constructor with `runNetworkSetup = false`, then you can use this method later to set up the network for this index.
      */
     setupPubsub = () => {
-        if (this.level === 'public') {
-            this.globalPrefix = 'public/';
-            return this.registerPubSubListeners();
-        }
-        else if (this.level === 'protected') {
-            return Auth.currentCredentials().then((credentials) => {
-                this.globalPrefix = "protected/" + credentials.identityId + "/";
-                return this.registerPubSubListeners();
-            });
-        }
-        return Promise.resolve();
+        return this.registerPubSubListeners();
     };
 
     /**
@@ -868,64 +893,22 @@ class ReactiveIndex {
         };
         const topic = makeTopicPubSubSafe("/UPDATE/" + fullPath);
         console.log("Updating '" + topic + "' with " + JSON.stringify(updatedFile));
-        const uploadObject = new RobustUpload(this.region, this.bucketName, fullPath, contents, '');
-        return uploadObject.upload((progress) => {
-            progressCallback(progress.loaded / progress.total);
-        }).then((response: any) => {
-            console.log("S3.put() Completed callback", response);
-            progressCallback(1.0);
-            this.clearNetworkError("Upload");
-            return this.socket.publish(topic, JSON.stringify(updatedFile));
-        }).catch((e: any) => {
-            this.setNetworkError("Upload", "We got an error trying to upload data!");
-            console.error("Error on Storage.put(), caught in .errorCallback() handler", e);
-            throw e;
+        return this.s3client.then((client) => {
+            const uploadObject = new RobustUpload(client, this.region, this.bucketName, fullPath, contents, '');
+            uploadObject.upload((progress) => {
+                progressCallback(progress.loaded / progress.total);
+            }).then((response: any) => {
+                console.log("S3.put() Completed callback", response);
+                progressCallback(1.0);
+                this.clearNetworkError("Upload");
+                return this.socket.publish(topic, JSON.stringify(updatedFile));
+            }).catch((e: any) => {
+                this.setNetworkError("Upload", "We got an error trying to upload data!");
+                console.error("Error on RobustUpload.upload(), caught in .errorCallback() handler", e);
+                throw e;
+            });
         });
-
-        /*
-        return new Promise(
-            (resolve: (value: void) => void, reject: (reason?: any) => void) => {
-                try {
-                    Storage.put(path, contents, {
-                        level: this.level,
-                        progressCallback: (progress) => {
-                            console.log("S3.put() Progress callback");
-                            progressCallback(progress.loaded / progress.total);
-                        },
-                        completeCallback: action((event) => {
-                            console.log("S3.put() Completed callback", event);
-                            progressCallback(1.0);
-                            this.clearNetworkError("Upload");
-                            this.socket.publish(topic, JSON.stringify(updatedFile)).then(() => resolve());
-                        }),
-                        errorCallback: (e: any) => {
-                            this.setNetworkError("Upload", "We got an error trying to upload a file!");
-                            console.error("Error on Storage.put(), caught in .errorCallback() handler", e);
-                            reject(e);
-                        }
-                    })
-                        .then((result) => {
-                            console.log("S3.put() Promise resolved", result);
-                            progressCallback(1.0);
-                            this.clearNetworkError("Upload");
-                            this.socket.publish(topic, JSON.stringify(updatedFile)).then(() => resolve());
-                        })
-                        .catch((e) => {
-                            console.log("S3.put() Promise error");
-                            this.setNetworkError("Upload", "We got an error trying to upload a file!");
-                            console.error("Error on Storage.put(), caught in .catch() handler", e);
-                            reject(e);
-                        });
-                }
-                catch (e) {
-                    this.setNetworkError("Upload", "We got an error trying to upload a file!");
-                    console.error("Error on Storage.put(), caught in catch block", e);
-                    reject(e);
-                }
-            }
-        );
-        */
-    }
+        }
 
     /**
      * This attempts to delete a file in S3, and notify PubSub of having done so.
@@ -936,24 +919,28 @@ class ReactiveIndex {
     delete = (path: string) => {
         const fullPath = this.globalPrefix + path;
         const topic = makeTopicPubSubSafe("/DELETE/" + fullPath);
-        return Storage.remove(path, { level: this.level })
-            .then((result) => {
-                console.log("Delete", result);
-                if (result != null && result.$metadata != null && result.$metadata.httpStatusCode != null) {
-                    this.clearNetworkError("Delete");
-                    return this.socket.publish(topic, JSON.stringify({ key: fullPath }));
-                }
-                else {
-                    this.setNetworkError("Delete", "We got an error trying to delete a file!");
-                    console.log("delete() error: " + path);
-                    throw new Error("Got an error trying to delete a file");
-                }
-            }).catch(e => {
+
+        const deleteCommand = new DeleteObjectCommand({
+            Bucket: this.bucketName,
+            Key: fullPath,
+        });
+        return this.s3client.then(client => client.send(deleteCommand).then((result: DeleteObjectCommandOutput) => {
+            console.log("Delete", result);
+            if (result != null && result.$metadata != null && result.$metadata.httpStatusCode != null) {
+                this.clearNetworkError("Delete");
+                return this.socket.publish(topic, JSON.stringify({ key: fullPath }));
+            }
+            else {
                 this.setNetworkError("Delete", "We got an error trying to delete a file!");
                 console.log("delete() error: " + path);
-                console.log(e);
-                throw e;
-            });
+                throw new Error("Got an error trying to delete a file");
+            }
+        }).catch(e => {
+            this.setNetworkError("Delete", "We got an error trying to delete a file!");
+            console.log("delete() error: " + path);
+            console.log(e);
+            throw e;
+        }));
     }
 
     /**
@@ -976,8 +963,41 @@ class ReactiveIndex {
      * @returns A signed URL that someone could use to download a file
      */
     getSignedURL = (path: string) => {
-        return Storage.get(path, {
-            level: this.level,
+        const objectCommand = new GetObjectCommand({
+            Bucket: this.bucketName,
+            Key: this.globalPrefix + path,
+        });
+        return this.s3client.then(client => getSignedUrl(client, objectCommand, { expiresIn: 3600 }));
+    };
+
+    /**
+     * This gets a signed URL, then fetches it.
+     */
+    fetchFile = (path: string, bodyType: 'blob' | 'text', progressCallback?: (progress: number) => void) => {
+        return this.getSignedURL(path).then((signedURL) => {
+            return new Promise<any>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = () => {
+                    resolve(xhr.response);
+                };
+                xhr.onerror = () => {
+                    reject();
+                }
+                xhr.onabort = () => {
+                    reject();
+                }
+                if (progressCallback) {
+                    xhr.onprogress = (event: any) => {
+                        progressCallback(event.loaded / event.total);
+                    }
+                }
+                xhr.responseType = bodyType;
+                xhr.open('GET', signedURL);
+                xhr.send();
+            });
+            // return fetch(signedURL, {
+            //     cache: 'no-cache'
+            // });
         });
     };
 
@@ -985,9 +1005,7 @@ class ReactiveIndex {
      * This actually downloads a file from S3, if the browser allows it
      */
     downloadFile = (path: string) => {
-        return Storage.get(path, {
-            level: this.level,
-        }).then((signedURL) => {
+        return this.getSignedURL(path).then((signedURL) => {
             this.clearNetworkError("Get");
             const link = document.createElement("a");
             link.href = signedURL;
@@ -1007,21 +1025,9 @@ class ReactiveIndex {
      * @returns A promise for the text of the file being downloaded
      */
     downloadText = (path: string) => {
-        return Storage.get(path, {
-            level: this.level,
-            download: true,
-            cacheControl: "no-cache",
-        }).then((result) => {
+        return this.fetchFile(path, 'text').then((result) => {
             this.clearNetworkError("Get");
-            if (result != null && result.Body != null) {
-                // data.Body is a Blob
-                return (result.Body as Blob).text().then((text: string) => {
-                    return text;
-                });
-            }
-            throw new Error(
-                'Result of downloading "' + path + "\" didn't have a Body"
-            );
+            return result;
         }).catch(e => {
             this.setNetworkError("Get", "We got an error trying to download a file!");
             console.log("DownloadText() error: " + path);
@@ -1038,28 +1044,18 @@ class ReactiveIndex {
      */
     downloadZip = (path: string, progressCallback?: (progress: number) => void) => {
         if (progressCallback) progressCallback(0.0);
-        return Storage.get(path, {
-            level: this.level,
-            download: true,
-            cacheControl: "no-cache",
-            progressCallback
-        }).then((result) => {
+        return this.fetchFile(path, 'blob', progressCallback).then(async (result) => {
             this.clearNetworkError("Get");
             const zip = new JSZip();
             if (progressCallback) progressCallback(1.0);
             console.log("Unzipping large file");
-            if (result != null && result.Body != null) {
-                // data.Body is a Blob
-                return zip.loadAsync(result.Body as Blob, ((metadata: any) => {
-                    console.log(metadata);
-                }) as any).then((unzipped: JSZip) => {
-                    console.log("Unzipped!");
-                    return unzipped.file(Object.keys(unzipped.files)[0])?.async("uint8array");
-                });
-            }
-            throw new Error(
-                'Result of downloading "' + path + "\" didn't have a Body"
-            );
+            // result is a Blob
+            return zip.loadAsync(result, ((metadata: any) => {
+                console.log(metadata);
+            }) as any).then((unzipped: JSZip) => {
+                console.log("Unzipped!");
+                return unzipped.file(Object.keys(unzipped.files)[0])?.async("uint8array");
+            });
         }).catch(e => {
             this.setNetworkError("Get", "We got an error trying to download a file!");
             console.log("DownloadZip() error: " + path);
@@ -1160,21 +1156,35 @@ class ReactiveIndex {
     /**
      * This does a complete refresh, overwriting the paths
      */
-    fullRefresh = () => {
+    fullRefresh = async (recreateClient: boolean = true) => {
         this.setIsLoading(true);
-        return this.loadFolder("", false).then((result) => {
+
+        if (recreateClient) {
+            this.s3client = this.createFreshS3Client();
+            // Wait for the client to establish, which updates this.myIdentityId
+            await this.s3client;
+        }
+
+        let paths = ['protected/'];
+        if (this.authenticated && this.myIdentityId !== '') {
+            paths.push('private/'+this.region+':'+this.myIdentityId+'/');
+        }
+
+        return Promise.all(paths.map(path => this.loadFolder(path, false))).then((results) => {
             this.clearNetworkError("FullRefresh");
 
             // 2. Update the set of files
 
             // 2.1. Build a map of the updated set of objects
             const newFiles: Map<string, ReactiveFileMetadata> = new Map();
-            for (let i = 0; i < result.files.length; i++) {
-                const key = result.files[i].key;
-                if (key != null) {
-                    newFiles.set(key, result.files[i]);
+            results.forEach((result) => {
+                for (let i = 0; i < result.files.length; i++) {
+                    const key = result.files[i].key;
+                    if (key != null) {
+                        newFiles.set(key, result.files[i]);
+                    }
                 }
-            }
+            });
 
             //////////////////////////////////////////////
             // Begin a bulk change to the index
@@ -1203,7 +1213,7 @@ class ReactiveIndex {
         })
             .catch((err: Error) => {
                 this.setIsLoading(false);
-                console.error('Unable to refresh index type "' + this.level + '"');
+                console.error('Unable to refresh index');
                 console.log(err);
                 this.setNetworkError("FullRefresh", "We got an error trying to load the files! Attempting to reconnect...");
             });
@@ -1214,43 +1224,14 @@ class ReactiveIndex {
      * This is a replacement for Storage.load(), but with support for limiting the results to one folder level, and to doing multiple pages of calls.
      */
     loadFolder = async (folder: string, limitToOneFolderLevel: boolean) => {
-
-        if (this.level === 'public') {
-            this.globalPrefix = 'public/';
-        }
-        else if (this.level === 'protected') {
-            let credentials = await Auth.currentCredentials();
-            this.globalPrefix = "protected/" + credentials.identityId + "/";
-        }
-
         if (folder !== '' && !folder.endsWith('/')) {
             folder += '/';
         }
         let path = this.globalPrefix + folder;
 
-        const INVALID_CRED = { accessKeyId: '', secretAccessKey: '' };
-        const credentialsProvider = async () => {
-            try {
-                const credentials = await Credentials.get();
-                if (!credentials) return INVALID_CRED;
-                const cred = Credentials.shear(credentials);
-                return cred;
-            } catch (error) {
-                console.warn('credentials provider error', error);
-                return INVALID_CRED;
-            }
-        }
-
-        const s3client = new S3Client({
-            region: this.region,
-            // Using provider instead of a static credentials, so that if an upload task was in progress, but credentials gets
-            // changed or invalidated (e.g user signed out), the subsequent requests will fail.
-            credentials: credentialsProvider,
-            customUserAgent: getAmplifyUserAgent()
-        });
-
         const bucketName = this.bucketName;
         const globalPrefix = this.globalPrefix;
+        const s3client = this.s3client;
         async function listAsync(continuationToken?: string, filesSoFar?: ReactiveFileMetadata[], foldersSoFar?: string[]): Promise<{ files: ReactiveFileMetadata[], folders: string[] }> {
             const listObjectsCommand = new ListObjectsV2Command({
                 Bucket: bucketName,
@@ -1260,7 +1241,8 @@ class ReactiveIndex {
                 ContinuationToken: continuationToken
             });
 
-            const output: ListObjectsV2CommandOutput = await s3client.send(listObjectsCommand);
+            const client = await s3client;
+            const output: ListObjectsV2CommandOutput = await client.send(listObjectsCommand);
 
             let files: ReactiveFileMetadata[] = filesSoFar ? [...filesSoFar] : [];
             if (output.Contents != null && output.Contents.length > 0) {
