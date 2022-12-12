@@ -25,7 +25,7 @@ def requireExists(path: str, reason: str):
               reason+'" does not exist. Quitting.')
         exit(1)
 
-def processLocalSubjectFolder(path: str, marker_set_fixed= [], outputName: str = None,):
+def processLocalSubjectFolder_testing(path: str, marker_set_fixed= [], outputName: str = None,):
     if not path.endswith('/'):
         path += '/'
 
@@ -972,13 +972,13 @@ if __name__ == "__main__":
         # nThreads = multiprocessing.cpu_count()-5
         # nThreads = 15
         # Parallel(n_jobs=nThreads)(
-        #     delayed(processLocalSubjectFolder)(
+        #     delayed(processLocalSubjectFolder_testing)(
         #         os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects[4:])
         
         # for subject in subjects[:2]:
         #     pathSubject = os.path.join(path_dataset, subject)
         #     print(pathSubject)
-        #     processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
+        #     processLocalSubjectFolder_testing(pathSubject, marker_set_fixed=marker_set_fixed)
         
         print(subjects)
         print(len(subjects))
@@ -1000,11 +1000,11 @@ if __name__ == "__main__":
         subject = '150'
         print("Processing {}".format(subject))
         pathSubject = os.path.join(path_dataset, subject)
-        processLocalSubjectFolder(pathSubject, marker_set_fixed=marker_set_fixed)
+        processLocalSubjectFolder_testing(pathSubject, marker_set_fixed=marker_set_fixed)
         
         # nThreads = 10
         # Parallel(n_jobs=nThreads)(
-        #     delayed(processLocalSubjectFolder)(
+        #     delayed(processLocalSubjectFolder_testing)(
         #         os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects_nonProcessed)
         
         # test=1
@@ -1041,7 +1041,7 @@ if __name__ == "__main__":
         # subject = 'P003'
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder_testing(pathSubject)
             
     elif dataset == 'balance_dataset':
     
@@ -1069,7 +1069,7 @@ if __name__ == "__main__":
         for subject in subjects_nonProcessed:
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder_testing(pathSubject)
             
     elif dataset == 'myer_dataset':
 
@@ -1103,7 +1103,7 @@ if __name__ == "__main__":
         for subject in subjects_nonProcessed:
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder_testing(pathSubject)
 
     elif dataset == 'hamstrings_dataset':
     
@@ -1131,7 +1131,7 @@ if __name__ == "__main__":
         for subject in subjects_nonProcessed:
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder_testing(pathSubject)
 
     elif dataset == 'multimodal_walking_dataset':
     
@@ -1159,7 +1159,7 @@ if __name__ == "__main__":
         for subject in subjects_nonProcessed:
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder_testing(pathSubject)
 
     elif dataset == 'parameter_estimation_dataset':
     
@@ -1187,7 +1187,7 @@ if __name__ == "__main__":
         for subject in subjects_nonProcessed:
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder_testing(pathSubject)
 
     elif dataset == 'running_leuven1_dataset':
     
@@ -1215,7 +1215,7 @@ if __name__ == "__main__":
         for subject in subjects_nonProcessed:
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder_testing(pathSubject)
 
     elif dataset == 'running_leuven2_dataset':
     
@@ -1243,7 +1243,7 @@ if __name__ == "__main__":
         for subject in subjects_nonProcessed:
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder_testing(pathSubject)
             
     elif dataset == 'inclined_walking_dataset':
     
@@ -1271,7 +1271,7 @@ if __name__ == "__main__":
         for subject in subjects_nonProcessed:
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder_testing(pathSubject)
 
     elif dataset == 'toeheel_walking_dataset':
     
@@ -1299,7 +1299,7 @@ if __name__ == "__main__":
         for subject in subjects_nonProcessed:
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder(pathSubject)
+            processLocalSubjectFolder_testing(pathSubject)
 
     elif dataset == 'pitching_dataset':
     
@@ -1325,7 +1325,7 @@ if __name__ == "__main__":
             print("Processing {}".format(subject))
             pathSubject = os.path.join(path_dataset, subject)
             try:
-                processLocalSubjectFolder(pathSubject)
+                processLocalSubjectFolder_testing(pathSubject)
             except:
                 pass
             

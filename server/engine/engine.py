@@ -292,7 +292,7 @@ def processLocalSubjectFolder(path: str, outputName: str = None):
     results: List[nimble.biomechanics.MarkerInitialization] = markerFitter.runMultiTrialKinematicsPipeline(
         markerTrials,
         nimble.biomechanics.InitialMarkerFitParams()
-        .setMaxTrialsToUseForMultiTrialScaling(5)
+        .setMaxTrialsToUseForMultiTrialScaling(50)
         .setMaxTimestepsToUseForMultiTrialScaling(4000),
         150)
 
@@ -308,7 +308,7 @@ def processLocalSubjectFolder(path: str, outputName: str = None):
         results = markerFitter.runMultiTrialKinematicsPipeline(
             markerTrials,
             nimble.biomechanics.InitialMarkerFitParams()
-            .setMaxTrialsToUseForMultiTrialScaling(5)
+            .setMaxTrialsToUseForMultiTrialScaling(50)
             .setMaxTimestepsToUseForMultiTrialScaling(4000),
             150)
 
