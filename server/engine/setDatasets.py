@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'toeheel_walking_dataset'
+dataset = 'pitching_dataset'
 
 def strip(y):
     return y.replace(" ", "")
@@ -1298,3 +1298,92 @@ elif dataset == 'inclined_walking_dataset':
                 path_generic_trc = os.path.join(path_original_subject, file)
                 path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
                 shutil.copy2(path_generic_trc, path_generic_trc_end)
+                
+elif dataset == 'pitching_dataset':
+    
+    infoSubjects = {'S1': {'massKg': 54.6,
+                             'heightM': 1.65,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'S2': {'massKg': 54.8,
+                             'heightM': 1.60,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'S3': {'massKg': 56.6,
+                             'heightM': 1.62,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'S4': {'massKg': 57.1,
+                             'heightM': 1.59,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'S5': {'massKg': 73.1,
+                             'heightM': 1.65,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'S6': {'massKg': 51.1,
+                             'heightM': 1.60,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'S7': {'massKg': 48.7,
+                             'heightM': 1.55,
+                             'sex': 'female',
+                             'model': 'normal'}}
+    
+    # path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/pitching_dataset'
+    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/pitching_dataset'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):
+            
+            if infoSubjects[subject]['model'] == 'exclude':
+                print('Exclude subject {}'.format(subject))
+                continue
+            
+            # Create new subject folder
+            # path_subject = os.path.join(path_clean_dataset, subject)
+            
+            
+            for session in os.listdir(os.path.join(path_original_dataset, subject)):          
+                if not 'w' in session:
+                    continue
+                
+                pathSubjectSession = os.path.join(path_clean_dataset, subject + '_' + session)
+                os.makedirs(pathSubjectSession, exist_ok=True)
+        
+                # Copy generic model
+                if infoSubjects[subject]['model'] == 'normal':
+                    path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+                else:
+                    raise ValueError("not existing")
+                path_generic_model_end = os.path.join(pathSubjectSession, 'unscaled_generic.osim')
+                shutil.copy2(path_generic_model, path_generic_model_end)
+                
+                # Dump generic demographics
+                outfile = os.path.join(pathSubjectSession, '_subject.json')
+                subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                                'heightM': infoSubjects[subject]['heightM'],
+                                'sex': infoSubjects[subject]['sex'],
+                                'skeletonPreset': 'custom'}
+                with open(outfile, "w") as outfile:
+                    json.dump(subject_data, outfile)
+                    
+                # Re-organize marker data            
+                path_original_subject = os.path.join(path_original_dataset, subject, session)
+                path_trials = os.path.join(pathSubjectSession, 'trials')            
+                
+                os.makedirs(path_trials, exist_ok=True)
+                for file in os.listdir(path_original_subject):
+                    if not '_trimmed.trc' in file:
+                        continue
+                    
+                    path_trial = os.path.join(path_trials, file[:-12])
+                    os.makedirs(path_trial, exist_ok=True)
+                    
+                    path_generic_trc = os.path.join(path_original_subject, file)
+                    path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                    shutil.copy2(path_generic_trc, path_generic_trc_end)
