@@ -1399,8 +1399,8 @@ elif dataset == 'karate_dataset':
             'sex': 'male',
             'model': 'normal'}}
     
-    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/karate_dataset'
-    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/karate_dataset'
+    # path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/karate_dataset'
+    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/karate_dataset'
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)
     
