@@ -1,6 +1,8 @@
 import os
 from engine import processLocalSubjectFolder
-from engine_local import processLocalSubjectFolder_testing
+from engine_local import processLocalSubjectFolder_local
+from engine_testing import processLocalSubjectFolder_testing
+
 
 path_main = os.getcwd()
 path_server = os.path.dirname(path_main)
@@ -45,7 +47,7 @@ if dataset == 'cmu_dataset':
     subject = '150'
     print("Processing {}".format(subject))
     pathSubject = os.path.join(path_dataset, subject)
-    processLocalSubjectFolder_testing(pathSubject, marker_set_fixed=marker_set_fixed)
+    processLocalSubjectFolder_local(pathSubject, marker_set_fixed=marker_set_fixed)
     
 elif dataset == 'cycling_dataset':
 

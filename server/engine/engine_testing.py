@@ -12,9 +12,6 @@ import shutil
 import textwrap
 import traceback
 
-from joblib import Parallel, delayed
-import multiprocessing
-
 GEOMETRY_FOLDER_PATH = absPath('Geometry')
 DATA_FOLDER_PATH = absPath('../data')
 
@@ -25,7 +22,8 @@ def requireExists(path: str, reason: str):
               reason+'" does not exist. Quitting.')
         exit(1)
 
-def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName: str = None,):
+
+def processLocalSubjectFolder_testing(path: str, outputName: str = None):
     if not path.endswith('/'):
         path += '/'
 
@@ -91,6 +89,16 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
     else:
         fitDynamics = False
 
+    if 'residualsToZero' in subjectJson:
+        residualsToZero = subjectJson['residualsToZero']
+    else:
+        residualsToZero = False
+
+    if 'tuneResidualLoss' in subjectJson:
+        tuneResidualLoss = subjectJson['tuneResidualLoss']
+    else:
+        tuneResidualLoss = 1.0
+
     if skeletonPreset == 'vicon' or skeletonPreset == 'cmu' or skeletonPreset == 'complete':
         footBodyNames = ['calcn_l', 'calcn_r']
     else:
@@ -151,7 +159,7 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
         customOsim.skeleton, customOsim.markersMap)
     markerFitter.setInitialIKSatisfactoryLoss(0.05)
     markerFitter.setInitialIKMaxRestarts(50)
-    # markerFitter.setIterationLimit(20)
+    # markerFitter.setIterationLimit(40)
     markerFitter.setIterationLimit(500)
 
     guessedTrackingMarkers = False
@@ -196,7 +204,6 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
             c3dFile: nimble.biomechanics.C3D = nimble.biomechanics.C3DLoader.loadC3D(
                 c3dFilePath)
             nimble.biomechanics.C3DLoader.fixupMarkerFlips(c3dFile)
-            print(c3dFilePath)
             markerFitter.autorotateC3D(c3dFile)
             c3dFiles[trialName] = c3dFile
             trialForcePlates.append(c3dFile.forcePlates)
@@ -204,9 +211,7 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
             trialFramesPerSecond.append(c3dFile.framesPerSecond)
             trialMarkerSet[trialName] = c3dFile.markers
             markerTrials.append(c3dFile.markerTimesteps)
-            
         elif os.path.exists(trcFilePath):
-            print(trcFilePath)
             trcFile: nimble.biomechanics.OpenSimTRC = nimble.biomechanics.OpenSimParser.loadTRC(
                 trcFilePath)
             markerTrials.append(trcFile.markerTimesteps)
@@ -238,41 +243,7 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
               str(trialNames[i])+'. This can take a while, depending on trial length...', flush=True)
         trialErrorReport = markerFitter.generateDataErrorsReport(
             markerTrials[i], 1.0 / trialFramesPerSecond[i])
-        # TODO: there is something wrong going on here
         markerTrials[i] = trialErrorReport.markerObservationsAttemptedFixed
-        
-        # Check if frame has enough data
-        if marker_set_fixed:
-            bad_frames = []
-            for c_f_idx, c_f in enumerate(markerTrials[i]):            
-                count = 0
-                for c_m in marker_set_fixed:
-                    if c_m in list(c_f.keys()):
-                        count += 1
-                if count < 20: # TODO testing
-                    bad_frames.append(c_f_idx)
-                    
-            bad_frames_np = np.asarray(bad_frames)
-            bad_frames_diff = np.diff(bad_frames_np)
-            bad_frames_diff[bad_frames_diff != 1] = 0
-            # Append zeros columns at either sides of counts
-            counts_ext = np.insert(bad_frames_diff,0, 0)
-            counts_ext = np.insert(counts_ext,counts_ext.shape[0], 0)        
-            # Get start and stop indices with 1s as triggers
-            diffs = np.diff((counts_ext==1).astype(int),axis=0)
-            starts = np.argwhere(diffs == 1).flatten()
-            stops = np.argwhere(diffs == -1).flatten()        
-            # Get intervals using differences between start and stop indices
-            intvs = stops - starts
-            # If one interval is > 2, then we cut
-            intvs_bool = intvs > 2
-            if True in intvs_bool:
-                first_intv = np.argwhere(intvs_bool == True)[0][0]
-                cut_idx = bad_frames[starts[first_intv]]      
-                del markerTrials[i][cut_idx:len(markerTrials[i])]
-                del trialTimestamps[i][cut_idx:len(trialTimestamps[i])]
-                del trialForcePlates[i][cut_idx:len(trialForcePlates[i])]
-        
         trialErrorReports.append(trialErrorReport)
         hasEnoughMarkers = markerFitter.checkForEnoughMarkers(markerTrials[i])
         totalFrames += len(markerTrials[i])
@@ -317,11 +288,24 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
     anthropometrics.setDistribution(gauss)
     markerFitter.setAnthropometricPrior(anthropometrics, 0.1)
 
+    # TODO
+    # Testing to include 5 trials that include the static ones
+    markerTrials_selected = []
+    mapping_selected = {}
+    c_count = 0
+    for c_trialName, trialName in enumerate(trialNames):
+        if not 'static' in trialName.lower():
+            continue
+        else:
+            markerTrials_selected.append(markerTrials[c_trialName])
+            mapping_selected[c_trialName] = c_count
+            c_count += 1
+
     # Run the kinematics pipeline
     results: List[nimble.biomechanics.MarkerInitialization] = markerFitter.runMultiTrialKinematicsPipeline(
-        markerTrials,
+        markerTrials_selected,
         nimble.biomechanics.InitialMarkerFitParams()
-        .setMaxTrialsToUseForMultiTrialScaling(50)
+        .setMaxTrialsToUseForMultiTrialScaling(5)
         .setMaxTimestepsToUseForMultiTrialScaling(4000),
         150)
 
@@ -331,19 +315,143 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
         if markerFitter.checkForFlippedMarkers(markerTrials[i], results[i], trialErrorReports[i]):
             anySwapped = True
             markerTrials[i] = trialErrorReports[i].markerObservationsAttemptedFixed
+            markerTrials_selected[mapping_selected[c_trialName]] = markerTrials[i]
 
     if anySwapped:
-        print("******** Unfortunately, it looks like some markers were swapped in the uploaded data, so we have to run the whole pipeline again with unswapped markers. ********")
+        print("******** Unfortunately, it looks like some markers were swapped in the uploaded data, so we have to run the whole pipeline again with unswapped markers. ********", flush=True)
         results = markerFitter.runMultiTrialKinematicsPipeline(
-            markerTrials,
+            markerTrials_selected,
             nimble.biomechanics.InitialMarkerFitParams()
-            .setMaxTrialsToUseForMultiTrialScaling(50)
+            .setMaxTrialsToUseForMultiTrialScaling(5)
             .setMaxTimestepsToUseForMultiTrialScaling(4000),
             150)
 
     customOsim.skeleton.setGroupScales(results[0].groupScales)
     fitMarkers: Dict[str, Tuple[nimble.dynamics.BodyNode,
                                 np.ndarray]] = results[0].updatedMarkerMap
+
+    # Set up some interchangeable data structures, so that we can write out the results using the same code, regardless of whether we used dynamics or not
+    finalSkeleton = customOsim.skeleton
+    finalPoses = [result.poses for result in results]
+    finalMarkers: Dict[str, Tuple[nimble.dynamics.BodyNode,
+                                  np.ndarray]] = fitMarkers
+    finalInverseDynamics = []
+
+    # If we've got ground reaction force data, and we enabled dynamics, then run the dynamics pipeline
+    if fitDynamics:
+        print('******** EXPERIMENTAL! Attempting to fit dynamics... ********', flush=True)
+        if len(footBodyNames) == 0:
+            print(
+                'ERROR: No foot bodies were specified, so we have to quit dynamics fitter early', flush=True)
+        else:
+            footBodies = []
+            for name in footBodyNames:
+                foot = finalSkeleton.getBodyNode(name)
+                if foot is None:
+                    print('ERROR: foot "' + str(name) +
+                          '" not found in skeleton! Dynamics fitter will break as a result.', flush=True)
+                footBodies.append(finalSkeleton.getBodyNode(name))
+
+            finalSkeleton.setGravity([0, -9.81, 0])
+            dynamicsFitter = nimble.biomechanics.DynamicsFitter(
+                finalSkeleton, footBodies, customOsim.trackingMarkers)
+            dynamicsInit = nimble.biomechanics.DynamicsFitter.createInitialization(
+                finalSkeleton,
+                results,
+                customOsim.trackingMarkers,
+                footBodies,
+                trialForcePlates,
+                trialFramesPerSecond,
+                markerTrials)
+            dynamicsFitter.estimateFootGroundContacts(dynamicsInit)
+
+            print("Initial mass: " +
+                  str(finalSkeleton.getMass()) + " kg", flush=True)
+            print("What we'd expect average ~GRF to be (Mass * 9.8): " +
+                  str(finalSkeleton.getMass() * 9.8) + " N", flush=True)
+            secondPair = dynamicsFitter.computeAverageRealForce(dynamicsInit)
+            print("Avg Force: " + str(secondPair[0]) + " N", flush=True)
+            print("Avg Torque: " + str(secondPair[1]) + " Nm", flush=True)
+
+            dynamicsFitter.boundPush(dynamicsInit)
+            dynamicsFitter.smoothAccelerations(dynamicsInit)
+            dynamicsFitter.timeSyncAndInitializePipeline(dynamicsInit)
+
+            maxNumTrials = 3
+
+            dynamicsFitter.setIterationLimit(200)
+            dynamicsFitter.setLBFGSHistoryLength(300)
+            dynamicsFitter.runIPOPTOptimization(
+                dynamicsInit,
+                nimble.biomechanics.DynamicsFitProblemConfig(
+                    finalSkeleton)
+                .setDefaults(True)
+                .setResidualWeight(4e-2 * tuneResidualLoss)
+                .setMaxNumTrials(maxNumTrials)
+                .setConstrainResidualsZero(False)
+                .setIncludeMasses(True)
+                # .setIncludeInertias(True)
+                # .setIncludeCOMs(True)
+                # .setIncludeBodyScales(True)
+                .setIncludeMarkerOffsets(True)
+                .setIncludePoses(True))
+
+            # If we have more trials than we included in the main optimization, do just poses optimization for it
+            for trial in range(len(dynamicsInit.poseTrials)):
+                if trial >= maxNumTrials:
+                    dynamicsFitter.setIterationLimit(200)
+                    dynamicsFitter.setLBFGSHistoryLength(100)
+                    dynamicsFitter.runIPOPTOptimization(
+                        dynamicsInit,
+                        nimble.biomechanics.DynamicsFitProblemConfig(
+                            finalSkeleton)
+                        .setDefaults(True)
+                        .setOnlyOneTrial(trial)
+                        .setResidualWeight(4e-2 * tuneResidualLoss)
+                        .setConstrainResidualsZero(False)
+                        .setIncludePoses(True))
+
+            # Specifically optimize to 0-ish residuals, if user requests it
+            if residualsToZero:
+                for trial in range(len(dynamicsInit.poseTrials)):
+                    originalTrajectory = dynamicsInit.poseTrials[trial].copy()
+                    for i in range(100):
+                        # this holds the mass constant, and re-jigs the trajectory to try to get
+                        # the angular ACC's to match more closely what was actually observed
+                        dynamicsFitter.zeroLinearResidualsAndOptimizeAngular(
+                            dynamicsInit, trial, originalTrajectory, 1.0, 0.5, 0.1, 0.1, 150)
+                    dynamicsFitter.recalibrateForcePlates(
+                        dynamicsInit, trial)
+
+            dynamicsFitter.computePerfectGRFs(dynamicsInit)
+
+            consistent = dynamicsFitter.checkPhysicalConsistency(
+                dynamicsInit, maxAcceptableErrors=1e-3, maxTimestepsToTest=25)
+
+            print("Avg Marker RMSE: " +
+                  str(dynamicsFitter.computeAverageMarkerRMSE(dynamicsInit) * 100) + "cm", flush=True)
+            pair = dynamicsFitter.computeAverageResidualForce(dynamicsInit)
+            print("Avg Residual Force: " + str(pair[0]) + " N (" + str((pair[0] /
+                  secondPair[0]) * 100) + "% of original " + str(secondPair[0]) + " N)", flush=True)
+            print("Avg Residual Torque: " + str(pair[1]) + " Nm (" + str((pair[1] /
+                  secondPair[1]) * 100) + "% of original " + str(secondPair[1]) + " Nm)", flush=True)
+            print("Avg CoP movement in 'perfect' GRFs: " +
+                  str(dynamicsFitter.computeAverageCOPChange(dynamicsInit)) + " m", flush=True)
+            print("Avg force change in 'perfect' GRFs: " +
+                  str(dynamicsFitter.computeAverageForceMagnitudeChange(dynamicsInit)) + " N", flush=True)
+
+            # Write all the results back
+            for trial in range(len(dynamicsInit.poseTrials)):
+                finalInverseDynamics.append(
+                    dynamicsFitter.computeInverseDynamics(dynamicsInit, trial))
+                pair = dynamicsFitter.computeAverageTrialResidualForce(
+                    dynamicsInit, trial)
+                trialProcessingResults[trial]['linearResidual'] = pair[0]
+                trialProcessingResults[trial]['angularResidual'] = pair[1]
+                pass
+            finalPoses = dynamicsInit.poseTrials
+            finalMarkers = dynamicsInit.updatedMarkerMap
+            trialForcePlates = dynamicsInit.forcePlateTrials
 
     # 8.2. Write out the usable OpenSim results
 
@@ -371,14 +479,14 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
     # 8.2.1. Adjusting marker locations
     print('Adjusting marker locations on scaled OpenSim file', flush=True)
     bodyScalesMap: Dict[str, np.ndarray] = {}
-    for i in range(customOsim.skeleton.getNumBodyNodes()):
-        bodyNode: nimble.dynamics.BodyNode = customOsim.skeleton.getBodyNode(i)
+    for i in range(finalSkeleton.getNumBodyNodes()):
+        bodyNode: nimble.dynamics.BodyNode = finalSkeleton.getBodyNode(i)
         # Now that we adjust the markers BEFORE we rescale the body, we don't want to rescale the marker locations at all
         bodyScalesMap[bodyNode.getName()] = [1, 1, 1]  # bodyNode.getScale()
     markerOffsetsMap: Dict[str, Tuple[str, np.ndarray]] = {}
     markerNames: List[str] = []
-    for k in fitMarkers:
-        v = fitMarkers[k]
+    for k in finalMarkers:
+        v = finalMarkers[k]
         markerOffsetsMap[k] = (v[0].getName(), v[1])
         markerNames.append(k)
     nimble.biomechanics.OpenSimParser.moveOsimMarkers(
@@ -386,7 +494,7 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
 
     # 8.2.2. Write the XML instructions for the OpenSim scaling tool
     nimble.biomechanics.OpenSimParser.saveOsimScalingXMLFile(
-        'optimized_scale_and_markers', customOsim.skeleton, massKg, heightM, 'Models/unscaled_but_with_optimized_markers.osim', 'Unassigned', 'Models/optimized_scale_and_markers.osim', path + 'results/Models/rescaling_setup.xml')
+        'optimized_scale_and_markers', finalSkeleton, massKg, heightM, 'Models/unscaled_but_with_optimized_markers.osim', 'Unassigned', 'Models/optimized_scale_and_markers.osim', path + 'results/Models/rescaling_setup.xml')
     # 8.2.3. Call the OpenSim scaling tool
     command = 'cd '+path+'results && opensim-cmd run-tool ' + \
         path + 'results/Models/rescaling_setup.xml'
@@ -398,80 +506,9 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
     if os.path.exists(path + 'results/opensim.log'):
         os.remove(path + 'results/opensim.log')
 
-    # Set up some interchangeable data structures, so that we can write out the results using the same code, regardless of whether we used dynamics or not
-    finalSkeleton = customOsim.skeleton
-    finalPoses = [result.poses for result in results]
-    finalMarkers: Dict[str, Tuple[nimble.dynamics.BodyNode,
-                                  np.ndarray]] = fitMarkers
-
-    # If we've got ground reaction force data, and we enabled dynamics, then run the dynamics pipeline
-    if fitDynamics:
-        print('**** EXPERIMENTAL! Attempting to fit dynamics')
-        if len(footBodyNames) == 0:
-            print(
-                'ERROR: No foot bodies were specified, so we have to quit dynamics fitter early')
-        else:
-            # optimizedOsim: nimble.biomechanics.OpenSimFile = nimble.biomechanics.OpenSimParser.parseOsim(
-            #     path + 'results/Models/optimized_scale_and_markers.osim')
-            optimizedOsim: nimble.biomechanics.OpenSimFile = customOsim
-            optimizedOsim.skeleton.autogroupSymmetricSuffixes()
-            if optimizedOsim.skeleton.getBodyNode("hand_r") is not None:
-                optimizedOsim.skeleton.setScaleGroupUniformScaling(
-                    optimizedOsim.skeleton.getBodyNode("hand_r"))
-            optimizedOsim.skeleton.autogroupSymmetricPrefixes("ulna", "radius")
-
-            footBodies = []
-            for name in footBodyNames:
-                footBodies.append(optimizedOsim.skeleton.getBodyNode(name))
-
-            dynamicsFitter = nimble.biomechanics.DynamicsFitter(
-                optimizedOsim.skeleton, footBodies, optimizedOsim.trackingMarkers)
-            dynamicsInit = nimble.biomechanics.DynamicsFitter.createInitialization(
-                optimizedOsim.skeleton,
-                results,
-                optimizedOsim.trackingMarkers,
-                footBodies,
-                trialForcePlates,
-                trialFramesPerSecond,
-                markerTrials)
-
-            print("Initial mass: " + str(optimizedOsim.skeleton.getMass()) + " kg")
-            print("What we'd expect average ~GRF to be (Mass * 9.8): " +
-                  str(optimizedOsim.skeleton.getMass() * 9.8) + " N")
-            secondPair = dynamicsFitter.computeAverageRealForce(dynamicsInit)
-            print("Avg Force: " + str(secondPair[0]) + " N")
-            print("Avg Torque: " + str(secondPair[1]) + " Nm")
-
-            dynamicsFitter.estimateFootGroundContacts(dynamicsInit)
-            dynamicsFitter.computeAverageRealForce(dynamicsInit)
-            dynamicsFitter.setIterationLimit(200)
-            dynamicsFitter.runIPOPTOptimization(
-                dynamicsInit, 2e-2, 50, True, False, True, False, True, False, False)
-
-            dynamicsFitter.setIterationLimit(200)
-            dynamicsFitter.runSGDOptimization(
-                dynamicsInit, 2e-2, 50, True, True, True, True, False, True)
-
-            dynamicsFitter.setIterationLimit(200)
-            dynamicsFitter.runSGDOptimization(
-                dynamicsInit, 2e-2, 50, True, True, True, True, True, True)
-
-            dynamicsFitter.computePerfectGRFs(dynamicsInit)
-
-            consistent = dynamicsFitter.checkPhysicalConsistency(
-                dynamicsInit, maxAcceptableErrors=1e-3, maxTimestepsToTest=25)
-
-            print("Avg Marker RMSE: " +
-                  str(dynamicsFitter.computeAverageMarkerRMSE(dynamicsInit) * 100) + "cm")
-            pair = dynamicsFitter.computeAverageResidualForce(dynamicsInit)
-            print("Avg Residual Force: " + str(pair[0]) + " N (" + str((pair[0] /
-                  secondPair[0]) * 100) + "% of original " + str(secondPair[0]) + " N)")
-            print("Avg Residual Torque: " + str(pair[1]) + " Nm (" + str((pair[1] /
-                  secondPair[1]) * 100) + "% of original " + str(secondPair[1]) + " Nm)")
-            print("Avg CoP movement in 'perfect' GRFs: " +
-                  str(dynamicsFitter.computeAverageCOPChange(dynamicsInit)) + " m")
-            print("Avg force change in 'perfect' GRFs: " +
-                  str(dynamicsFitter.computeAverageForceMagnitudeChange(dynamicsInit)) + " N")
+    # 8.2.4. Overwrite the inertia properties of the resulting OpenSim skeleton file
+    nimble.biomechanics.OpenSimParser.replaceOsimInertia(
+        path + 'results/Models/optimized_scale_and_markers.osim', finalSkeleton, path + 'results/Models/final.osim')
 
     # Output both SDF and MJCF versions of the skeleton, so folks in AI/graphics can use the results in packages they're familiar with
     if exportSDF or exportMJCF:
@@ -531,6 +568,8 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
 
     for i in range(len(finalPoses)):
         poses = finalPoses[i]
+        forces = finalInverseDynamics[i] if i < len(
+            finalInverseDynamics) else None
         trialName = trialNames[i]
         c3dFile = c3dFiles[trialName] if trialName in c3dFiles else None
         forcePlates = trialForcePlates[i]
@@ -594,6 +633,9 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
               trialName+'.mot file, shape='+str(poses.shape), flush=True)
         nimble.biomechanics.OpenSimParser.saveMot(
             finalSkeleton, path + 'results/IK/'+trialName+'_ik.mot', timestamps, poses)
+        if forces is not None:
+            nimble.biomechanics.OpenSimParser.saveIDMot(
+                finalSkeleton, path + 'results/ID/'+trialName+'_id.mot', timestamps, forces)
         resultIK.saveCSVMarkerErrorReport(
             path + 'results/IK/'+trialName+'_ik_per_marker_error_report.csv')
         nimble.biomechanics.OpenSimParser.saveGRFMot(
@@ -623,6 +665,8 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
                 i,
                 round(1.0 / dynamicsInit.trialTimesteps[i]))
 
+            dynamicsFitter.writeCSVData(
+                trialPath+'plot.csv', dynamicsInit, i)
             dynamicsFitter.writeCSVData(
                 path + 'results/ID/'+trialName+'_full.csv', dynamicsInit, i)
         else:
@@ -755,6 +799,9 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
     goldTotalLen = 0
     processingResult['autoAvgRMSE'] = 0
     processingResult['autoAvgMax'] = 0
+    if fitDynamics:
+        processingResult['linearResidual'] = 0
+        processingResult['angularResidual'] = 0
     processingResult['goldAvgRMSE'] = 0
     processingResult['goldAvgMax'] = 0
     for i in range(len(results)):
@@ -762,6 +809,9 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
         trialProcessingResult = trialProcessingResults[i]
         processingResult['autoAvgRMSE'] += trialProcessingResult['autoAvgRMSE'] * trialLen
         processingResult['autoAvgMax'] += trialProcessingResult['autoAvgMax'] * trialLen
+        if fitDynamics:
+            processingResult['linearResidual'] += trialProcessingResult['linearResidual'] * trialLen
+            processingResult['angularResidual'] += trialProcessingResult['angularResidual'] * trialLen
         autoTotalLen += trialLen
 
         if 'goldAvgRMSE' in trialProcessingResult and 'goldAvgMax' in trialProcessingResult:
@@ -770,6 +820,9 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
             goldTotalLen += trialLen
     processingResult['autoAvgRMSE'] /= autoTotalLen
     processingResult['autoAvgMax'] /= autoTotalLen
+    if fitDynamics:
+        processingResult['linearResidual'] /= autoTotalLen
+        processingResult['angularResidual'] /= autoTotalLen
     if goldTotalLen > 0:
         processingResult['goldAvgRMSE'] /= goldTotalLen
         processingResult['goldAvgMax'] /= goldTotalLen
@@ -942,391 +995,11 @@ def processLocalSubjectFolder_local(path: str, marker_set_fixed= [], outputName:
 
 
 if __name__ == "__main__":
-    
-    
-    
-    path_main = os.getcwd()
-    path_server = os.path.dirname(path_main)
-    path_data = os.path.join(path_server, 'data')
-    
-    
-    dataset = 'pitching_dataset'
-    
-    if dataset == 'cmu_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file)
-                subjects.append(file)
-            except:
-                pass
-        
-        marker_set_fixed = ['C7', 'T10', 'CLAV', 'STRN', 'RELB', 'RWRA', 'RWRB',
-                            'LELB', 'LWRA', 'LWRB', 'RFWT', 'LFWT', 'RBWT', 'LBWT',
-                            'RKNE', 'RANK', 'RHEE', 'RTOE', 'RMT5', 
-                            'LKNE', 'LANK', 'LHEE', 'LTOE', 'LMT5']
-        
-        
-        # nThreads = multiprocessing.cpu_count()-5
-        # nThreads = 15
-        # Parallel(n_jobs=nThreads)(
-        #     delayed(processLocalSubjectFolder_testing)(
-        #         os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects[4:])
-        
-        # for subject in subjects[:2]:
-        #     pathSubject = os.path.join(path_dataset, subject)
-        #     print(pathSubject)
-        #     processLocalSubjectFolder_testing(pathSubject, marker_set_fixed=marker_set_fixed)
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-        print(subjects_Processed)
-        print(len(subjects_Processed))
-        print(subjects_nonProcessed)
-        print(len(subjects_nonProcessed))
-        
-        # for subject in subjects_nonProcessed[1:]:
-        subject = '150'
-        print("Processing {}".format(subject))
-        pathSubject = os.path.join(path_dataset, subject)
-        processLocalSubjectFolder_testing(pathSubject, marker_set_fixed=marker_set_fixed)
-        
-        # nThreads = 10
-        # Parallel(n_jobs=nThreads)(
-        #     delayed(processLocalSubjectFolder_testing)(
-        #         os.path.join(path_dataset, subject), marker_set_fixed=marker_set_fixed) for subject in subjects_nonProcessed)
-        
-        # test=1
-        
-    elif dataset == 'cycling_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file[1:])
-                subjects.append(file)
-            except:
-                pass
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        print(subjects_Processed)
-        print(len(subjects_Processed))
-        print(subjects_nonProcessed)
-        print(len(subjects_nonProcessed))
-        
-        for subject in subjects_nonProcessed:
-        # subject = 'P003'
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder_testing(pathSubject)
-            
-    elif dataset == 'balance_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file[4:])
-                subjects.append(file)
-            except:
-                pass
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        for subject in subjects_nonProcessed:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder_testing(pathSubject)
-            
-    elif dataset == 'myer_dataset':
-
-        folders = ['PreTesting_2017_fall_VR', 'PreTesting_2017_summer_VR', 
-               'PreTesting_2018_summer_VR', 'PreTesting_2019_fall_VR', 
-               'PreTesting_2019_summer_VR']
-        
-        session = folders[4]
-    
-        path_dataset = os.path.join(path_data, dataset, session)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file[-3:])
-                subjects.append(file)
-            except:
-                pass
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        for subject in subjects_nonProcessed:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder_testing(pathSubject)
-
-    elif dataset == 'hamstrings_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file[4:])
-                subjects.append(file)
-            except:
-                pass
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        for subject in subjects_nonProcessed:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder_testing(pathSubject)
-
-    elif dataset == 'multimodal_walking_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file[4:])
-                subjects.append(file)
-            except:
-                pass
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        for subject in subjects_nonProcessed:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder_testing(pathSubject)
-
-    elif dataset == 'parameter_estimation_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file[4:])
-                subjects.append(file)
-            except:
-                pass
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        for subject in subjects_nonProcessed:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder_testing(pathSubject)
-
-    elif dataset == 'running_leuven1_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file[4:])
-                subjects.append(file)
-            except:
-                pass
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        for subject in subjects_nonProcessed:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder_testing(pathSubject)
-
-    elif dataset == 'running_leuven2_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file[4:])
-                subjects.append(file)
-            except:
-                pass
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        for subject in subjects_nonProcessed:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder_testing(pathSubject)
-            
-    elif dataset == 'inclined_walking_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file[8:])
-                subjects.append(file)
-            except:
-                pass
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        for subject in subjects_nonProcessed:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder_testing(pathSubject)
-
-    elif dataset == 'toeheel_walking_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            try:
-                idx_file = int(file[7:])
-                subjects.append(file)
-            except:
-                pass
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        for subject in subjects_nonProcessed:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            processLocalSubjectFolder_testing(pathSubject)
-
-    elif dataset == 'pitching_dataset':
-    
-        path_dataset = os.path.join(path_data, dataset)
-        subjects = []
-        for file in os.listdir(path_dataset):
-            if 'w' in file:
-                subjects.append(file)
-        
-        print(subjects)
-        print(len(subjects))
-        subjects_Processed = []
-        subjects_nonProcessed = []
-        for subject in subjects:
-            pathSubject = os.path.join(path_dataset, subject)
-            pathJson = os.path.join(pathSubject, '_results.json')
-            if os.path.exists(pathJson):
-                subjects_Processed.append(subject)
-            else:
-                subjects_nonProcessed.append(subject)
-                
-        for subject in subjects_nonProcessed[:1]:
-            print("Processing {}".format(subject))
-            pathSubject = os.path.join(path_dataset, subject)
-            try:
-                processLocalSubjectFolder_testing(pathSubject)
-            except:
-                pass
-            
-        test=1
+    print(sys.argv)
+    # processLocalSubjectFolder("/tmp/tmpa4sqewbz", "some_user_name_results")
+    # processLocalSubjectFolder("/tmp/tmpqg3u6hdr", "some_user_name_results")
+    # processLocalSubjectFolder("/tmp/tmpa0c7p0na")
+    # processLocalSubjectFolder("/tmp/tmp_287z04g")
+    # processLocalSubjectFolder("/tmp/tmp99d3lw9v/")
+    processLocalSubjectFolder(
+        sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else None)
