@@ -188,20 +188,20 @@
 	
 # done
 
-for n in Subject1 Subject2 Subject3 Subject4 Subject5 Subject6 Subject7 Subject8 Subject9 Subject10 Subject11 Subject12 Subject13 Subject14 Subject15 Subject16 Subject17 Subject18 Subject19 Subject20 Subject21 Subject22 Subject23 Subject24 Subject25 Subject26 Subject27 Subject28 Subject29 Subject30 Subject31 Subject32 Subject33 Subject34 Subject35 Subject36 Subject37 Subject38 Subject39 Subject40 Subject41 Subject42 Subject43 Subject44 Subject45 Subject46 Subject47 Subject48 Subject49 Subject50;
+# for n in Subject1 Subject2 Subject3 Subject4 Subject5 Subject6 Subject7 Subject8 Subject9 Subject10 Subject11 Subject12 Subject13 Subject14 Subject15 Subject16 Subject17 Subject18 Subject19 Subject20 Subject21 Subject22 Subject23 Subject24 Subject25 Subject26 Subject27 Subject28 Subject29 Subject30 Subject31 Subject32 Subject33 Subject34 Subject35 Subject36 Subject37 Subject38 Subject39 Subject40 Subject41 Subject42 Subject43 Subject44 Subject45 Subject46 Subject47 Subject48 Subject49 Subject50;
 
-do
-	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset/$n/osim_results" ]; then
-		# # sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/toeheel_walking_dataset/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset/$n"
+# do
+	# # if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset/$n/osim_results" ]; then
+		# # # sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/toeheel_walking_dataset/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset/$n"
 		
-		# # sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/toeheel_walking_dataset/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset/$n/osim_results"
+		# # # sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/toeheel_walking_dataset/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset/$n/osim_results"
 		
-		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/toeheel_walking_dataset/$n/_subject.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset/$n/osim_results"
-	# fi
+		# # sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/toeheel_walking_dataset/$n/_subject.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset/$n/osim_results"
+	# # fi
 	
-	sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/toeheel_walking_dataset/$n/_subject.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset/$n/osim_results"
+	# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/toeheel_walking_dataset/$n/_subject.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset/$n/osim_results"
 	
-done
+# done
 
 # for n in subject_01 subject_02 subject_03 subject_04 subject_05 subject_06 subject_07 subject_08 subject_10 subject_11 subject_13;
 
@@ -213,3 +213,50 @@ done
 	# fi
 	
 # done
+
+for n in 1w1d 1w2d 1w3d 2w1d 2w2d 2w3d 3w1d 3w2d 3w3d 4w1d 4w2d 4w3d 5w1d 5w2d 5w3d;
+
+do
+	if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S1/$n/osim_results" ]; then
+		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S1_$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S1/$n"
+		
+		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S1_$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S1/$n/osim_results"
+	fi
+	
+	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S2/$n/osim_results" ]; then
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S2_$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S2/$n"
+		
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S2_$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S2/$n/osim_results"
+	# fi
+	
+	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S3/$n/osim_results" ]; then
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S3_$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S3/$n"
+		
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S3_$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S3/$n/osim_results"
+	# fi
+	
+	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S4/$n/osim_results" ]; then
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S4_$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S4/$n"
+		
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S4_$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S4/$n/osim_results"
+	# fi
+	
+	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S5/$n/osim_results" ]; then
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S5_$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S5/$n"
+		
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S5_$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S5/$n/osim_results"
+	# fi
+	
+	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S6/$n/osim_results" ]; then
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S6_$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S6/$n"
+		
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S6_$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S6/$n/osim_results"
+	# fi
+	
+	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S7/$n/osim_results" ]; then
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S7_$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S7/$n"
+		
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S7_$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S7/$n/osim_results"
+	# fi
+	
+done
