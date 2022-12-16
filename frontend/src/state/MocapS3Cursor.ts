@@ -1,4 +1,4 @@
-import { ReactiveCursor, ReactiveIndex, ReactiveJsonFile, ReactiveTextFile } from "./ReactiveS3";
+import { ReactiveCursor, ReactiveSearchList, ReactiveIndex, ReactiveJsonFile, ReactiveTextFile } from "./ReactiveS3";
 import { makeObservable, observable, action } from 'mobx';
 import { Auth } from "aws-amplify";
 import RobustMqtt from "./RobustMqtt";
@@ -74,9 +74,9 @@ class MocapS3Cursor {
     dataPrefix: string;
     rawCursor: ReactiveCursor;
     s3Index: ReactiveIndex;
+    searchIndex: ReactiveSearchList;
 
     region: string;
-    myIdentityId: string;
     authenticated: boolean;
 
     showValidationControls: boolean;
@@ -89,6 +89,7 @@ class MocapS3Cursor {
 
     subjectJson: ReactiveJsonFile;
     resultsJson: ReactiveJsonFile;
+    searchJson: ReactiveJsonFile;
     customModelFile: ReactiveTextFile;
 
     socket: RobustMqtt;
@@ -105,6 +106,7 @@ class MocapS3Cursor {
         this.region = 'us-west-2';
         this.rawCursor = new ReactiveCursor(s3Index, 'protected/'+this.region+":"+s3Index.myIdentityId);
         this.s3Index = s3Index;
+        this.searchIndex = new ReactiveSearchList(s3Index, '_SEARCH');
 
         this.cachedLogFile = null;
         this.cachedResultsFile = null;
@@ -116,6 +118,7 @@ class MocapS3Cursor {
 
         this.subjectJson = this.rawCursor.getJsonFile("_subject.json");
         this.resultsJson = this.rawCursor.getJsonFile("_results.json");
+        this.searchJson = this.rawCursor.getJsonFile("_search.json");
         this.customModelFile = this.rawCursor.getTextFile("unscaled_generic.osim");
 
         this.socket = socket;
@@ -126,18 +129,15 @@ class MocapS3Cursor {
         this.processingServersLastUpdatedTimestamp = new Map();
         this.lastSeenPong = new Map();
 
-        this.myIdentityId = '';
         this.authenticated = false;
         Auth.currentCredentials().then(action((credentials) => {
             this.authenticated = credentials.authenticated;
-            this.myIdentityId = credentials.identityId.replace("us-west-2:", "");
         }))
 
         this.s3Index.addChildrenListener("protected/server_status/", this.updateProcessingServerFiles);
         this.updateProcessingServerFiles();
 
         makeObservable(this, {
-            myIdentityId: observable,
             dataPrefix: observable,
             showValidationControls: observable,
             userEmail: observable,
@@ -320,7 +320,8 @@ class MocapS3Cursor {
         const exists: boolean = this.rawCursor.getExists();
         // Special case: this happens when a user has just created an account, but hasn't uploaded anything yet.
         // If we're in the root of our private folder, even if no files uploaded yet, always treat this as a folder.
-        if (!exists && !hasChildren && parts.length === 3 && parts[1] === this.s3Index.myIdentityId && parts[2] === 'data') {
+        const id = parts[1].replace(this.region+":", "");
+        if (!exists && !hasChildren && parts.length === 3 && id === this.s3Index.myIdentityId && parts[2] === 'data') {
             return "folder";
         }
         // Otherwise say 404
@@ -509,6 +510,8 @@ class MocapS3Cursor {
         }
 
         for (let i = 0; i < rawFolders.length; i++) {
+            if (rawFolders[i].key.indexOf("_SEARCH") !== -1 || rawFolders[i].key.indexOf("_search.json") !== -1) continue;
+
             let type: 'folder' | 'mocap' = 'folder';
             if (this.rawCursor.childHasChildren(rawFolders[i].key, ['trials/', '_subject.json'])) {
                 type = 'mocap';
@@ -777,6 +780,27 @@ class MocapS3Cursor {
     }
 
     /**
+     * Returns true if the current folder is publicly searchable
+     */
+    isSearchable = () => {
+        return this.rawCursor.hasChildren(["_SEARCH"]);
+    }
+
+    /**
+     * This marks a folder as searchable
+     */
+    markSearchable = () => {
+        return this.rawCursor.uploadChild("_SEARCH", "");
+    }
+
+    /**
+     * This marks a folder as not searchable
+     */
+    markNotSearchable = () => {
+        return this.rawCursor.deleteChild("_SEARCH");
+    }
+
+    /**
      * This adds the "READY_TO_PROCESS" file on the backend, which marks the trial as being fully uploaded, and
      * ready for the backend to pick up and work on.
      */
@@ -825,6 +849,22 @@ class MocapS3Cursor {
      */
     downloadResultsArchive = () => {
         this.rawCursor.downloadFile(this.getCurrentFileName() + ".zip");
+    };
+
+    /**
+     * Returns true if there's a zip archive of the results
+     * 
+     * @returns 
+     */
+    hasSubjectOnDisk = () => {
+        return this.rawCursor.hasChildren([ this.getCurrentFileName() + ".bin"]);
+    };
+
+    /**
+     * Download the zip results archive
+     */
+    downloadSubjectOnDisk = () => {
+        this.rawCursor.downloadFile(this.getCurrentFileName() + ".bin");
     };
 
     /**

@@ -1,40 +1,89 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import logo from "../../assets/images/logo-alone.svg";
 import MocapS3Cursor from '../../state/MocapS3Cursor';
+import {
+  Row,
+  Col,
+  Card,
+  Dropdown,
+  ButtonGroup,
+  Spinner,
+} from "react-bootstrap";
+import { observer } from "mobx-react-lite";
 import './SearchView.scss';
+
+type SearchResultProps = {
+  cursor: MocapS3Cursor;
+  filePath: string;
+};
+
+const SearchResult = (props: SearchResultProps) => {
+  const navigate = useNavigate();
+
+  const filtered = props.filePath.replace("protected/us-west-2:", "").replace('/_SEARCH', '');
+  const parts = filtered.split('/');
+  if (parts.length === 2) {
+    const userId = parts[0];
+    return <Link to={'/data/' + userId}>{'User ' + userId}</Link>
+  }
+  else if (parts.length > 2) {
+    const userId = parts[0];
+    let link = '/data/' + userId + '/' + parts.slice(2).join('/');
+    return <Link to={link}>{'User ' + userId + '/' + parts.slice(2).join('/')}</Link>
+  }
+  else {
+    return null;
+  }
+};
 
 type SearchViewProps = {
   cursor: MocapS3Cursor;
 };
 
-const SearchView = (props: SearchViewProps) => {
-  const navigate = useNavigate();
+const SearchView = observer((props: SearchViewProps) => {
+  const result = props.cursor.searchIndex.results;
+  const availableOptions = [...result.keys()];
+
+  useEffect(() => {
+    props.cursor.searchIndex.startListening();
+
+    return () => {
+      props.cursor.searchIndex.stopListening();
+    }
+  }, []);
+
+  let body = null;
+  if (props.cursor.getIsLoading()) {
+    body = <Spinner animation="border" />;
+  }
+  else {
+    body = <>
+      <ul>
+        {availableOptions.map((v) => {
+          return <li key={v}>
+            <SearchResult cursor={props.cursor} filePath={v} />
+          </li>
+        })}
+      </ul>
+    </>
+  }
+
   return (
     <>
-      <div className="container col-xxl-8 px-4 py-5">
-        <div className="row flex-lg-row-reverse align-items-center g-5 py-5">
-          <div className="col-10 col-sm-8 col-lg-6">
-            <img src={logo} className="d-block mx-lg-auto img-fluid" alt="Bootstrap Themes" width="700" height="500" loading="lazy" />
-          </div>
-          <div className="col-lg-6" style={{ position: "relative" }}>
-            <h1 className="display-5 fw-bold lh-1 mb-3">Coming (Very) Soon:</h1>
-            <div className="d-grid gap-2 d-md-flex justify-content-md-start">
-              <a type="button" className="btn btn-primary btn-lg px-4 me-md-2" href={"/data"} onClick={(e) => {
-                e.preventDefault();
-                navigate("/data");
-              }}>Process and Share Data</a>
-              <a type="button" className="btn btn-outline-secondary btn-lg px-4" href="/public_data"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate("/");
-                }}>Back Home</a>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Row className="mt-3">
+        <Col md="12">
+          <Card className="mt-4">
+            <Card.Body>
+              <h3>Published Folders:</h3>
+              <p>All folders still in "draft" mode will not show up here. Authors must mark their folder as published to have it appear here.</p>
+              {body}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
     </>
   );
-};
+});
 
 export default SearchView;
