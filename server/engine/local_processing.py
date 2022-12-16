@@ -361,7 +361,7 @@ elif dataset == 'pitching_dataset':
         else:
             subjects_nonProcessed.append(subject)
             
-    for subject in subjects_nonProcessed[:1]:
+    for subject in subjects_nonProcessed:
         print("Processing {}".format(subject))
         pathSubject = os.path.join(path_dataset, subject)
         try:
