@@ -1594,7 +1594,7 @@ elif dataset == 'karate_dataset':
                 if not subject in session:
                     continue
                 
-                pathSubjectSession = os.path.join(path_clean_dataset, subject + '_S0' + str(c_session))
+                pathSubjectSession = os.path.join(path_clean_dataset, subject + '-S0' + str(c_session))
                 os.makedirs(pathSubjectSession, exist_ok=True)
         
                 # Copy generic model
