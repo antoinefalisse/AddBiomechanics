@@ -971,7 +971,7 @@ elif dataset == 'pitching_dataset':
     
     path_clean_dataset = os.path.join(dataDir, dataset)
     
-    subjects = ['S' + str(i) for i in range(1,8)]
+    subjects = ['S' + str(i) for i in range(1,2)]
     
     # Loop over subjects
     count = 0
@@ -1004,78 +1004,78 @@ elif dataset == 'pitching_dataset':
                 print(pathResults)
                 # shutil.rmtree(pathResults)
             
-            # if not os.path.exists(os.path.join(pathResults, 'Models', 'optimized_scale_and_markers.osim')):
-            #     os.chdir(pathResults)
-            #     cmd = 'opensim-cmd run-tool Models/rescaling_setup.xml'
-            #     os.system(cmd)
-            #     os.chdir(path_main)
+            if not os.path.exists(os.path.join(pathResults, 'Models', 'optimized_scale_and_markers.osim')):
+                os.chdir(pathResults)
+                cmd = 'opensim-cmd run-tool Models/rescaling_setup.xml'
+                os.system(cmd)
+                os.chdir(path_main)
                 
                 
-            # pathC3D = os.path.join(pathResults, 'MarkerData') 
-            # pathIK = os.path.join(pathResults, 'IK')
+            pathC3D = os.path.join(pathResults, 'MarkerData') 
+            pathIK = os.path.join(pathResults, 'IK')
             
-            # count = 0
-            # for file in os.listdir(pathC3D):
+            count = 0
+            for file in os.listdir(pathC3D):
                 
-            #     if not '.trc' in file:
-            #         continue
+                if not '.trc' in file:
+                    continue
                 
-            #     # Check marker error
-            #     filename = file[:-4] + '_ik_per_marker_error_report.csv'
-            #     pathMarkerError = os.path.join(pathIK, filename)
+                # Check marker error
+                filename = file[:-4] + '_ik_per_marker_error_report.csv'
+                pathMarkerError = os.path.join(pathIK, filename)
                 
-            #     os.listdir(pathIK)
+                os.listdir(pathIK)
                 
-            #     filename = file[:-4] + '_ik_per_marker_error_report.csv'
-            #     pathMarkerError = os.path.join(pathIK, filename)
-            #     marker_error_all = pd.read_csv(pathMarkerError)
+                filename = file[:-4] + '_ik_per_marker_error_report.csv'
+                pathMarkerError = os.path.join(pathIK, filename)
+                marker_error_all = pd.read_csv(pathMarkerError)
                 
-            #     marker_error = np.zeros((marker_error_all.shape[0], len(marker_set_fixed)))
+                marker_error = np.zeros((marker_error_all.shape[0], len(marker_set_fixed)))
                 
-            #     for m, marker in enumerate(marker_set_fixed):
-            #         if marker in marker_error_all:
-            #             marker_error[:, m] = marker_error_all[marker]
-            #         else:
-            #             # print("Marker {} not in csv report".format(marker))
-            #             marker_error[:, m] = np.nan
+                for m, marker in enumerate(marker_set_fixed):
+                    if marker in marker_error_all:
+                        marker_error[:, m] = marker_error_all[marker]
+                    else:
+                        # print("Marker {} not in csv report".format(marker))
+                        marker_error[:, m] = np.nan
                     
-            #     marker_error_metrics = {}
-            #     marker_error_metrics['mean_frames'] = np.nanmean(marker_error, axis=1)
-            #     marker_error_metrics['std_frames'] = np.nanstd(marker_error, axis=1)
-            #     marker_error_metrics['mean_all'] = np.nanmean(marker_error_metrics['mean_frames'])
-            #     marker_error_metrics['std_frames'] = np.nanstd(marker_error_metrics['mean_frames'])
+                marker_error_metrics = {}
+                marker_error_metrics['mean_frames'] = np.nanmean(marker_error, axis=1)
+                marker_error_metrics['std_frames'] = np.nanstd(marker_error, axis=1)
+                marker_error_metrics['mean_all'] = np.nanmean(marker_error_metrics['mean_frames'])
+                marker_error_metrics['std_frames'] = np.nanstd(marker_error_metrics['mean_frames'])
                 
-            #     marker_error_metrics['max_frames'] = np.max(marker_error, axis=1)
-            #     marker_error_metrics['max_all'] = np.max(marker_error_metrics['max_frames'])
+                marker_error_metrics['max_frames'] = np.max(marker_error, axis=1)
+                marker_error_metrics['max_all'] = np.max(marker_error_metrics['max_frames'])
                 
-            #     if marker_error_metrics['mean_all'] > 0.025:
-            #         print("Mean error for subject {}, trial {} is {} mm".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
-            #         # f.write("Mean error for subject {}, trial {} is {} mm\n".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
-            #         count += 1
-            #         # rename file
-            #         pathFile = os.path.join(pathIK, file[:-4] + '_ik.mot')
-            #         pathFile2 = os.path.join(pathIK, file[:-4] + '_ik_error_larger_3cm.mot')
-            #         pathFileEnd = os.path.join(pathIK, file[:-4] + '_ik_error_larger_25mm.mot')
-            #         if not os.path.exists(pathFileEnd):
-            #             if os.path.exists(pathFile):
-            #                 os.rename(pathFile, pathFileEnd)
-            #             else:
-            #                 os.rename(pathFile2, pathFileEnd)
+                if marker_error_metrics['mean_all'] > 0.025:
+                    print("Mean error for subject {}, trial {} is {} mm".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
+                    # f.write("Mean error for subject {}, trial {} is {} mm\n".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
+                    count += 1
+                    # rename file
+                    pathFile = os.path.join(pathIK, file[:-4] + '_ik.mot')
+                    pathFile2 = os.path.join(pathIK, file[:-4] + '_ik_error_larger_3cm.mot')
+                    pathFileEnd = os.path.join(pathIK, file[:-4] + '_ik_error_larger_25mm.mot')
+                    if not os.path.exists(pathFileEnd):
+                        if os.path.exists(pathFile):
+                            os.rename(pathFile, pathFileEnd)
+                        else:
+                            os.rename(pathFile2, pathFileEnd)
                             
-            #     # # Exclude statics - bad with the few arm markers
-            #     # if 'static' in file:                
-            #     #     pathFile = os.path.join(pathIK, file[:-4] + '_ik.mot')
-            #     #     pathFileError = os.path.join(pathIK, file[:-4] + '_ik_error_larger_25mm.mot')
-            #     #     if not os.path.exists(pathFileError):
-            #     #         pathFileEnd = os.path.join(pathIK, file[:-4] + '_ik_exclude.mot')
-            #     #         if not os.path.exists(pathFileEnd):
-            #     #             os.rename(pathFile, pathFileEnd)
+                # # Exclude statics - bad with the few arm markers
+                # if 'static' in file:                
+                #     pathFile = os.path.join(pathIK, file[:-4] + '_ik.mot')
+                #     pathFileError = os.path.join(pathIK, file[:-4] + '_ik_error_larger_25mm.mot')
+                #     if not os.path.exists(pathFileError):
+                #         pathFileEnd = os.path.join(pathIK, file[:-4] + '_ik_exclude.mot')
+                #         if not os.path.exists(pathFileEnd):
+                #             os.rename(pathFile, pathFileEnd)
                     
-            # if count == len(os.listdir(pathC3D)):
-            #     print('Only bad trials for subject {}'.format(subject))
-            #     # f.write("Only bad trials for subject {}\n".format(subject))
+            if count == len(os.listdir(pathC3D)):
+                print('Only bad trials for subject {}'.format(subject))
+                # f.write("Only bad trials for subject {}\n".format(subject))
                     
-            #     test = 1
+                test = 1
                 
 elif dataset == 'karate_dataset':
        

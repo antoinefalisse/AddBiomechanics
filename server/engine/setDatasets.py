@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'pitching_dataset'
+dataset = 'perturbed_walking_dataset'
 
 def strip(y):
     return y.replace(" ", "")
@@ -1631,3 +1631,207 @@ elif dataset == 'karate_dataset':
                     shutil.copy2(path_generic_trc, path_generic_trc_end)
                     
                 c_session += 1
+
+elif dataset == 'perturbed_walking_dataset':
+    
+    infoSubjects = {
+        'pp_2': {
+            'massKg': 72,
+            'heightM': 1.59,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'pp_3': {
+            'massKg': 67.5,
+            'heightM': 1.69,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'pp_4': {
+            'massKg': 83.0,
+            'heightM': 1.75,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'pp_5': {
+            'massKg': 78.1,
+            'heightM': 1.67,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'pp_8': {
+            'massKg': 57.6,
+            'heightM': 1.53,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'pp_9': {
+            'massKg': 86.8,
+            'heightM': 1.75,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'pp_10': {
+            'massKg': 81.0,
+            'heightM': 1.77,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'pp_11': {
+            'massKg': 58.8,
+            'heightM': 1.66,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'pp_12': {
+            'massKg': 55.8,
+            'heightM': 1.60,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient2': {
+            'massKg': 96.9,
+            'heightM': 1.78,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient4': {
+            'massKg': 64.0,
+            'heightM': 1.78,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient5': {
+            'massKg': 82.5,
+            'heightM': 1.59,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient6': {
+            'massKg': 63.2,
+            'heightM': 1.63,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient7': {
+            'massKg': 68.5,
+            'heightM': 1.63,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient8': {
+            'massKg': 51.4,
+            'heightM': 1.55,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient9': {
+            'massKg': 69.8,
+            'heightM': 1.59,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient10': {
+            'massKg': 69.1,
+            'heightM': 1.59,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient11': {
+            'massKg': 65.2,
+            'heightM': 1.64,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient12': {
+            'massKg': 89.6,
+            'heightM': 1.77,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient13': {
+            'massKg': 76.3,
+            'heightM': 1.81,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient14': {
+            'massKg': 68.5,
+            'heightM': 1.66,
+            'sex': 'unknown',
+            'model': 'exclude'},
+        'Patient15': {
+            'massKg': 64.5,
+            'heightM': 1.64,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient16': {
+            'massKg': 53.3,
+            'heightM': 1.54,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient17': {
+            'massKg': 75.3,
+            'heightM': 1.68,
+            'sex': 'unknown',
+            'model': 'exclude'},
+        'Patient18': {
+            'massKg': 57.1,
+            'heightM': 1.57,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient19': {
+            'massKg': 75.5,
+            'heightM': 1.84,
+            'sex': 'unknown',
+            'model': 'normal'},
+        'Patient20': {
+            'massKg': 63.3,
+            'heightM': 1.61,
+            'sex': 'unknown',
+            'model': 'normal'}}
+    
+    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/perturbed_walking_dataset'
+    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/karate_dataset'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+    
+    
+    # Loop over subjects
+    for session in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, session)):
+            pathSession = os.path.join(path_original_dataset, session)
+
+            for subject in os.listdir(pathSession):
+                pathSubject = os.path.join(pathSession, subject)
+                if not os.path.isdir(pathSubject):
+                    continue
+            
+                if subject not in infoSubjects:
+                    continue
+                
+                if infoSubjects[subject]['model'] == 'exclude':
+                    print('Exclude subject {}'.format(subject))
+                    continue
+
+                pathSubjectNew = os.path.join(path_clean_dataset, subject)
+                os.makedirs(pathSubjectNew, exist_ok=True)
+        
+                # Copy generic model
+                if infoSubjects[subject]['model'] == 'normal':
+                    path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+                else:
+                    raise ValueError("not existing")
+                path_generic_model_end = os.path.join(pathSubjectNew, 'unscaled_generic.osim')
+                shutil.copy2(path_generic_model, path_generic_model_end)
+                
+                # Dump generic demographics
+                outfile = os.path.join(pathSubjectNew, '_subject.json')
+                subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                                'heightM': infoSubjects[subject]['heightM'],
+                                'sex': infoSubjects[subject]['sex'],
+                                'skeletonPreset': 'custom'}
+                with open(outfile, "w") as outfile:
+                    json.dump(subject_data, outfile)
+                    
+                # Re-organize marker data            
+                path_original_subject = os.path.join(pathSubject, 'AllData')
+                path_trials = os.path.join(pathSubjectNew, 'trials')            
+                
+                os.makedirs(path_trials, exist_ok=True)
+                for file in os.listdir(path_original_subject):
+                    if not '_cleaned.trc' in file:
+                        continue
+                    
+                    path_trial = os.path.join(path_trials, file[:-12])
+                    os.makedirs(path_trial, exist_ok=True)
+                    
+                    path_generic_trc = os.path.join(path_original_subject, file)
+                    path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                    shutil.copy2(path_generic_trc, path_generic_trc_end)
+
+                    path_generic_mot = os.path.join(path_original_subject, file[:-12] + '.mot')
+                    path_generic_mot_end = os.path.join(path_trial, 'grf.mot')
+                    shutil.copy2(path_generic_mot, path_generic_mot_end)
+                    
+                # c_session += 1

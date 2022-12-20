@@ -214,14 +214,14 @@
 	
 # done
 
-# for n in 1w1d 1w2d 1w3d 2w1d 2w2d 2w3d 3w1d 3w2d 3w3d 4w1d 4w2d 4w3d 5w1d 5w2d 5w3d;
+for n in 1w1d 1w2d 1w3d 2w1d 2w2d 2w3d 3w1d 3w2d 3w3d 4w1d 4w2d 4w3d 5w1d 5w2d 5w3d;
 
-# do
-	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S1/$n/osim_results" ]; then
-		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S1_$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S1/$n"
+do
+	if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S1/$n/osim_results" ]; then
+		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S1_$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S1/$n"
 		
-		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S1_$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S1/$n/osim_results"
-	# fi
+		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S1_$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S1/$n/osim_results"
+	fi
 	
 	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S2/$n/osim_results" ]; then
 		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S2_$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S2/$n"
@@ -259,7 +259,7 @@
 		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/pitching_dataset/S7_$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/pitching_dataset/S7/$n/osim_results"
 	# fi
 	
-# done
+done
 
 
 # for n in B0369 B0370; do for nn in 1 2 3 4 5; 
