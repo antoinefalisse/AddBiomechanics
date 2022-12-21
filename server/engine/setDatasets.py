@@ -1810,7 +1810,10 @@ elif dataset == 'perturbed_walking_dataset':
                 subject_data = {'massKg': infoSubjects[subject]['massKg'],
                                 'heightM': infoSubjects[subject]['heightM'],
                                 'sex': infoSubjects[subject]['sex'],
-                                'skeletonPreset': 'custom'}
+                                'skeletonPreset': 'custom',
+                                #'fitDynamics': True,
+                                #'footBodyNames': ['calcn_l', 'calcn_r']
+                                }
                 with open(outfile, "w") as outfile:
                     json.dump(subject_data, outfile)
                     

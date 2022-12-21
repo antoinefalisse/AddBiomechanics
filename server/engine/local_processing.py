@@ -406,7 +406,7 @@ elif dataset == 'perturbed_walking_dataset':
     path_dataset = os.path.join(path_data, dataset)
     subjects = []
     for file in os.listdir(path_dataset):
-        if 'pp' in file or 'atient' in file':
+        if ('pp' in file or 'atient' in file):
             subjects.append(file)
     
     print(subjects)
