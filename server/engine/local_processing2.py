@@ -453,7 +453,7 @@ elif dataset == 'perturbed_walking_dataset':
             
     subjects =  ['pp_10',  'pp_11',  'pp_12', 'pp_2', 'pp_3', 'pp_4', 'pp_5', 'pp_6', 'pp_8', 'pp_9']
             
-    for subject in subjects[:3]:
+    for subject in subjects[6:]:
         print("Processing {}".format(subject))
         pathSubject = os.path.join(path_dataset, subject)
         try:

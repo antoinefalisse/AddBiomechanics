@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'tennis_dataset'
+dataset = 'perturbed_walking_dataset'
 
 def strip(y):
     return y.replace(" ", "")
@@ -1782,7 +1782,7 @@ elif dataset == 'perturbed_walking_dataset':
         if os.path.isdir(os.path.join(path_original_dataset, session)):
             pathSession = os.path.join(path_original_dataset, session)
 
-            for subject in os.listdir(pathSession)[:1]:
+            for subject in os.listdir(pathSession):
                 pathSubject = os.path.join(pathSession, subject)
                 if not os.path.isdir(pathSubject):
                     continue
@@ -1846,7 +1846,7 @@ elif dataset == 'tennis_dataset':
             'massKg': 76.7,
             'heightM': 1.75,
             'sex': 'male',
-            'model': 'normal'},
+            'model': 'exclude'},
         'sub_00_B': {
             'massKg': 76.7,
             'heightM': 1.75,
@@ -1866,7 +1866,7 @@ elif dataset == 'tennis_dataset':
             'massKg': 77.3,
             'heightM': 1.80,
             'sex': 'male',
-            'model': 'normal'},
+            'model': 'exclude'},
         'sub_03_B': {
             'massKg': 77.3,
             'heightM': 1.80,
