@@ -1287,16 +1287,16 @@ elif dataset == 'tennis_dataset':
             if marker_error_metrics['mean_all'] > 0.025:
                 print("Mean error for subject {}, trial {} is {} mm".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
                 # f.write("Mean error for subject {}, trial {} is {} mm\n".format(subject, file[:-4], np.round(marker_error_metrics['mean_all'], 4)*1000))
-                # count += 1
-                # # rename file
-                # pathFile = os.path.join(pathIK, file[:-4] + '_ik.mot')
-                # pathFile2 = os.path.join(pathIK, file[:-4] + '_ik_error_larger_3cm.mot')
-                # pathFileEnd = os.path.join(pathIK, file[:-4] + '_ik_error_larger_25mm.mot')
-                # if not os.path.exists(pathFileEnd):
-                #     if os.path.exists(pathFile):
-                #         os.rename(pathFile, pathFileEnd)
-                #     else:
-                #         os.rename(pathFile2, pathFileEnd)
+                count += 1
+                # rename file
+                pathFile = os.path.join(pathIK, file[:-4] + '_ik.mot')
+                pathFile2 = os.path.join(pathIK, file[:-4] + '_ik_error_larger_3cm.mot')
+                pathFileEnd = os.path.join(pathIK, file[:-4] + '_ik_error_larger_25mm.mot')
+                if not os.path.exists(pathFileEnd):
+                    if os.path.exists(pathFile):
+                        os.rename(pathFile, pathFileEnd)
+                    else:
+                        os.rename(pathFile2, pathFileEnd)
                 
         if count == len(os.listdir(pathC3D)):
             print('Only bad trials for subject {}'.format(subject))
