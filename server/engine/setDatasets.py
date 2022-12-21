@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'perturbed_walking_dataset'
+dataset = 'tennis_dataset'
 
 def strip(y):
     return y.replace(" ", "")
@@ -1838,3 +1838,164 @@ elif dataset == 'perturbed_walking_dataset':
                     # shutil.copy2(path_generic_mot, path_generic_mot_end)
                     
                 # c_session += 1
+                
+elif dataset == 'tennis_dataset':
+    
+    infoSubjects = {
+        'sub_00_A': {
+            'massKg': 76.7,
+            'heightM': 1.75,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_00_B': {
+            'massKg': 76.7,
+            'heightM': 1.75,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_01_B': {
+            'massKg': 76.6,
+            'heightM': 1.80,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_02_B': {
+            'massKg': 61.1,
+            'heightM': 1.77,
+            'sex': 'female',
+            'model': 'normal'},
+        'sub_03_A': {
+            'massKg': 77.3,
+            'heightM': 1.80,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_03_B': {
+            'massKg': 77.3,
+            'heightM': 1.80,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_04_B': {
+            'massKg': 60.3,
+            'heightM': 1.77,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_05_A': {
+            'massKg': 81.0,
+            'heightM': 1.84,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_05_B': {
+            'massKg': 81.0,
+            'heightM': 1.84,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_06_B': {
+            'massKg': 78.6,
+            'heightM': 1.79,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_07_B': {
+            'massKg': 68.0,
+            'heightM': 1.58,
+            'sex': 'female',
+            'model': 'normal'},
+        'sub_08_B': {
+            'massKg': 76.8,
+            'heightM': 1.94,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_09_B': {
+            'massKg': 76.1,
+            'heightM': 1.73,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_10_A': {
+            'massKg': 61.4,
+            'heightM': 1.74,
+            'sex': 'female',
+            'model': 'normal'},
+        'sub_10_B': {
+            'massKg': 61.4,
+            'heightM': 1.74,
+            'sex': 'female',
+            'model': 'normal'},
+        'sub_11_B': {
+            'massKg': 71.6,
+            'heightM': 1.64,
+            'sex': 'female',
+            'model': 'normal'},
+        'sub_12_A': {
+            'massKg': 80.1,
+            'heightM': 1.77,
+            'sex': 'male',
+            'model': 'normal'},
+        'sub_12_B': {
+            'massKg': 80.1,
+            'heightM': 1.77,
+            'sex': 'male',
+            'model': 'normal'}}
+    
+    # path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/tennis_dataset'
+    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/tennis_dataset'
+    path_original_dataset = '/home/clarkadmin/Downloads/tennis_dataset'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        pathSubject = os.path.join(path_original_dataset, subject)
+        if not os.path.isdir(pathSubject):
+            continue
+    
+        if subject not in infoSubjects:
+            continue
+        
+        if infoSubjects[subject]['model'] == 'exclude':
+            print('Exclude subject {}'.format(subject))
+            continue
+
+        pathSubjectNew = os.path.join(path_clean_dataset, subject)
+        os.makedirs(pathSubjectNew, exist_ok=True)
+
+        # Copy generic model
+        if infoSubjects[subject]['model'] == 'normal':
+            if '_A' in subject:
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers_A.osim')
+            elif '_B' in subject:
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers_B.osim') 
+        else:
+            raise ValueError("not existing")
+        path_generic_model_end = os.path.join(pathSubjectNew, 'unscaled_generic.osim')
+        shutil.copy2(path_generic_model, path_generic_model_end)
+        
+        # Dump generic demographics
+        outfile = os.path.join(pathSubjectNew, '_subject.json')
+        subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                        'heightM': infoSubjects[subject]['heightM'],
+                        'sex': infoSubjects[subject]['sex'],
+                        'skeletonPreset': 'custom',
+                        #'fitDynamics': True,
+                        #'footBodyNames': ['calcn_l', 'calcn_r']
+                        }
+        with open(outfile, "w") as outfile:
+            json.dump(subject_data, outfile)
+            
+        # Re-organize marker data            
+        path_trials = os.path.join(pathSubjectNew, 'trials')            
+        
+        os.makedirs(path_trials, exist_ok=True)
+        for file in os.listdir(pathSubject):
+            if not 'nimble_cleaned.trc' in file:
+                continue
+            
+            path_trial = os.path.join(path_trials, file[:-19])
+            os.makedirs(path_trial, exist_ok=True)
+            
+            path_generic_trc = os.path.join(pathSubject, file)
+            path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+            shutil.copy2(path_generic_trc, path_generic_trc_end)
+
+            # path_generic_mot = os.path.join(path_original_subject, file[:-12] + '.mot')
+            # path_generic_mot_end = os.path.join(path_trial, 'grf.mot')
+            # shutil.copy2(path_generic_mot, path_generic_mot_end)
+            
+        # c_session += 1
