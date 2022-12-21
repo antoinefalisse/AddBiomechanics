@@ -1926,7 +1926,7 @@ elif dataset == 'tennis_dataset':
             'massKg': 80.1,
             'heightM': 1.77,
             'sex': 'male',
-            'model': 'normal'},
+            'model': 'exclude'},
         'sub_12_B': {
             'massKg': 80.1,
             'heightM': 1.77,
@@ -1973,8 +1973,7 @@ elif dataset == 'tennis_dataset':
                         'heightM': infoSubjects[subject]['heightM'],
                         'sex': infoSubjects[subject]['sex'],
                         'skeletonPreset': 'custom',
-                        #'fitDynamics': True,
-                        #'footBodyNames': ['calcn_l', 'calcn_r']
+                        'ignoreJointLimits': True
                         }
         with open(outfile, "w") as outfile:
             json.dump(subject_data, outfile)

@@ -451,7 +451,7 @@ elif dataset == 'tennis_dataset':
         else:
             subjects_nonProcessed.append(subject)
             
-    for subject in subjects[:4]:
+    for subject in subjects[12:]:
         print("Processing {}".format(subject))
         pathSubject = os.path.join(path_dataset, subject)
         try:

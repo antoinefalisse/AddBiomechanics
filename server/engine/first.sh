@@ -323,7 +323,7 @@
 # done; done;
 
 
-for n in sub_10_A sub_10_A;
+for n in sub_00_A sub_00_B sub_01_B sub_02_B sub_03_A sub_03_B sub_04_B sub_05_A sub_05_B sub_06_B sub_07_B sub_08_B sub_09_B sub_11_B sub_12_A sub_12_B;
 
 do
 	if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/tennis_dataset/$n/osim_results" ]; then

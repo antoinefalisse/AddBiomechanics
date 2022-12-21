@@ -1207,11 +1207,11 @@ elif dataset == 'tennis_dataset':
                         'CALD', 'ACG', 'BHAG', 'BHPG', 'BBPG', 'BBAG', 'ELG', 'EMG', 'PSRG', 'PSUG', 
                         'ACD', 'BHAD', 'BHPD', 'BBPD', 'BBAD', 'ELD', 'EMD', 'PSRD', 'PSUD', 'T10']
     
-    # subjects = ['sub_00_A', 'sub_00_B', 'sub_01', 'sub_02', 'sub_03_A', 'sub_03_B',
-    #             'sub_04', 'sub_05_A', 'sub_05_B', 'sub_06', 'sub_07', 'sub_08', 'sub_09',
-    #             'sub_10_A', 'sub_10_B', 'sub_11', 'sub_12_B']
+    subjects = ['sub_00_A', 'sub_00_B', 'sub_01_B', 'sub_02_B', 'sub_03_A', 'sub_03_B',
+                'sub_04_B', 'sub_05_A', 'sub_05_B', 'sub_06_B', 'sub_07_B', 'sub_08_B', 'sub_09_B',
+                'sub_10_A', 'sub_10_B', 'sub_11_B', 'sub_12_B']
     
-    subjects = ['sub_10_A']
+    # subjects = ['sub_10_A']
     
     path_clean_dataset = os.path.join(dataDir, dataset)
     
@@ -1235,8 +1235,11 @@ elif dataset == 'tennis_dataset':
         elif '_B' in subject:
             marker_set_fixed = markers_subject['service']
 
+        
            
         pathResults = os.path.join(pathSubject, 'osim_results')
+        if not os.path.exists(pathResults):
+            continue
         if not os.path.exists(os.path.join(pathResults, 'Models', 'optimized_scale_and_markers.osim')):
             os.chdir(pathResults)
             cmd = 'opensim-cmd run-tool Models/rescaling_setup.xml'
