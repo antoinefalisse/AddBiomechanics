@@ -23,3 +23,4 @@ server/data/toeheel_walking_dataset/*
 server/data/pitching_dataset/*
 server/data/karate_dataset/*
 server/data/perturbed_walking_dataset/*
+server/data/tennis_dataset/*
