@@ -9,7 +9,7 @@ path_server = os.path.dirname(path_main)
 path_data = os.path.join(path_server, 'data')
 
 
-dataset = 'perturbed_walking_dataset'
+dataset = 'karate_dataset_test'
 
 if dataset == 'cmu_dataset':
 
