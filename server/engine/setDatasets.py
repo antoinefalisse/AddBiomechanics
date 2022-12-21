@@ -1782,7 +1782,7 @@ elif dataset == 'perturbed_walking_dataset':
         if os.path.isdir(os.path.join(path_original_dataset, session)):
             pathSession = os.path.join(path_original_dataset, session)
 
-            for subject in os.listdir(pathSession):
+            for subject in os.listdir(pathSession)[:1]:
                 pathSubject = os.path.join(pathSession, subject)
                 if not os.path.isdir(pathSubject):
                     continue
@@ -1833,8 +1833,8 @@ elif dataset == 'perturbed_walking_dataset':
                     path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
                     shutil.copy2(path_generic_trc, path_generic_trc_end)
 
-                    path_generic_mot = os.path.join(path_original_subject, file[:-12] + '.mot')
-                    path_generic_mot_end = os.path.join(path_trial, 'grf.mot')
-                    shutil.copy2(path_generic_mot, path_generic_mot_end)
+                    # path_generic_mot = os.path.join(path_original_subject, file[:-12] + '.mot')
+                    # path_generic_mot_end = os.path.join(path_trial, 'grf.mot')
+                    # shutil.copy2(path_generic_mot, path_generic_mot_end)
                     
                 # c_session += 1
