@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'perturbed_walking_dataset'
+dataset = 'nmbl_running'
 
 def strip(y):
     return y.replace(" ", "")
@@ -1998,3 +1998,101 @@ elif dataset == 'tennis_dataset':
             # shutil.copy2(path_generic_mot, path_generic_mot_end)
             
         # c_session += 1
+        
+elif dataset == 'nmbl_running':
+    
+    infoSubjects = {'subject01': {'massKg': 72.8,
+                             'heightM': 1.80,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject02': {'massKg': 76.5,
+                             'heightM': 1.85,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject03': {'massKg': 64.0,
+                             'heightM': 1.77,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject04': {'massKg': 80.5,
+                             'heightM': 1.76,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject08': {'massKg': 82.4,
+                             'heightM': 1.78,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject10': {'massKg': 69.3,
+                             'heightM': 1.75,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject11': {'massKg': 69.4,
+                             'heightM': 1.77,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject17': {'massKg': 68.5,
+                             'heightM': 1.75,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject19': {'massKg': 65.1,
+                             'heightM': 1.75,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject20': {'massKg': 67.2,
+                             'heightM': 1.75,
+                             'sex': 'unknown',
+                             'model': 'normal'}}
+    
+    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/nmbl_running'
+    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):
+            
+            if infoSubjects[subject]['model'] == 'exclude':
+                print('Exclude subject {}'.format(subject))
+                continue
+            
+            # Create new subject folder
+            path_subject = os.path.join(path_clean_dataset, subject)
+            os.makedirs(path_subject, exist_ok=True)
+    
+            # Copy generic model
+            if infoSubjects[subject]['model'] == 'normal':
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+            else:
+                raise ValueError("not existing")
+            path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+            shutil.copy2(path_generic_model, path_generic_model_end)
+            
+            # Dump generic demographics
+            outfile = os.path.join(path_subject, '_subject.json')
+            subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                            'heightM': infoSubjects[subject]['heightM'],
+                            'sex': infoSubjects[subject]['sex'],
+                            'skeletonPreset': 'custom'}
+            with open(outfile, "w") as outfile:
+                json.dump(subject_data, outfile)
+                
+            # Re-organize marker data            
+            path_original_subject = os.path.join(path_original_dataset, subject, 'ExportedData')
+            path_trials = os.path.join(path_subject, 'trials')            
+            
+            os.makedirs(path_trials, exist_ok=True)
+            for file in os.listdir(path_original_subject):
+                if not '.trc' in file:
+                    continue
+                
+                if 'static' in file.lower():
+                    if not '_study_rot.trc' in file.lower():
+                        continue
+                
+                path_trial = os.path.join(path_trials, file[:-4])
+                os.makedirs(path_trial, exist_ok=True)
+                
+                path_generic_trc = os.path.join(path_original_subject, file)
+                path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                shutil.copy2(path_generic_trc, path_generic_trc_end)

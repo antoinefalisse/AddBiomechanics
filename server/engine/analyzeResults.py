@@ -12,7 +12,7 @@ path_main = os.getcwd()
 dataDir = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/'
 
 # Pick dataset
-dataset = 'perturbed_walking_dataset'
+dataset = 'tennis_dataset'
 
 if dataset == 'cmu_dataset':
     
@@ -178,7 +178,7 @@ elif dataset == 'myer_dataset_cleaned':
     
     # sessions = ['PreTesting_2017_fall', 'PreTesting_2017_summer', 'PreTesting_2018_summer', 'PreTesting_2019_fall', 'PreTesting_2019_summer']
     # sessions = ['PreTesting_2017_fall_VR', 'PreTesting_2017_summer_VR', 'PreTesting_2018_summer_VR', 'PreTesting_2019_fall_VR']
-    sessions = ['PreTesting_2019_summer_VR']
+    sessions = ['PreTesting_2018_summer_VR']
 
     
     marker_set_fixed = ['R.Shoulder', 'L.Shoulder', 'Sternum', 'L.ASIS', 'R.ASIS', 'Sacrum', 'R.Knee',
@@ -199,7 +199,7 @@ elif dataset == 'myer_dataset_cleaned':
             if not 'anmt' in subject.lower():
                 continue
             
-            if 'anmt107' in subject.lower():
+            if not 'anmt107' in subject.lower():
                 continue
             
             pathSubject = os.path.join(pathSession, subject)            
@@ -1207,9 +1207,12 @@ elif dataset == 'tennis_dataset':
                         'CALD', 'ACG', 'BHAG', 'BHPG', 'BBPG', 'BBAG', 'ELG', 'EMG', 'PSRG', 'PSUG', 
                         'ACD', 'BHAD', 'BHPD', 'BBPD', 'BBAD', 'ELD', 'EMD', 'PSRD', 'PSUD', 'T10']
     
-    subjects = ['sub_00_B', 'sub_01_B', 'sub_02_B', 'sub_03_B',
-                'sub_04_B', 'sub_05_A', 'sub_05_B', 'sub_06_B', 'sub_07_B', 'sub_08_B', 'sub_09_B',
-                'sub_10_A', 'sub_10_B', 'sub_11_B', 'sub_12_B']
+    # subjects = ['sub_00_B', 'sub_01_B', 'sub_02_B', 'sub_03_B',
+    #             'sub_04_B', 'sub_05_A', 'sub_05_B', 'sub_06_B', 'sub_07_B', 'sub_08_B', 'sub_09_B',
+    #             'sub_10_A', 'sub_10_B', 'sub_11_B', 'sub_12_B']
+    
+    subjects = [
+                'sub_10_A', 'sub_10_B']
     
     # subjects = ['sub_10_A']
     
