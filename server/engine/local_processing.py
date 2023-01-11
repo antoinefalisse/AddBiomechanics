@@ -9,7 +9,7 @@ path_server = os.path.dirname(path_main)
 path_data = os.path.join(path_server, 'data')
 
 
-dataset = 'perturbed_walking_dataset'
+dataset = 'nmbl_running'
 
 if dataset == 'cmu_dataset':
 
@@ -465,6 +465,36 @@ elif dataset == 'perturbed_walking_dataset':
 
 
 elif dataset == 'tennis_dataset':
+
+    path_dataset = os.path.join(path_data, dataset)
+    subjects = []
+    for file in os.listdir(path_dataset):
+        if ('sub' in file):
+            subjects.append(file)
+    
+    print(subjects)
+    print(len(subjects))
+    subjects_Processed = []
+    subjects_nonProcessed = []
+    for subject in subjects:
+        pathSubject = os.path.join(path_dataset, subject)
+        pathJson = os.path.join(pathSubject, '_results.json')
+        if os.path.exists(pathJson):
+            subjects_Processed.append(subject)
+        else:
+            subjects_nonProcessed.append(subject)
+            
+    for subject in subjects_nonProcessed:
+        print("Processing {}".format(subject))
+        pathSubject = os.path.join(path_dataset, subject)
+        try:
+            processLocalSubjectFolder(pathSubject)
+        except:
+            pass
+        
+    test=1
+    
+elif dataset == 'nmbl_running':
 
     path_dataset = os.path.join(path_data, dataset)
     subjects = []

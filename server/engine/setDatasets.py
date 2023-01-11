@@ -2042,11 +2042,10 @@ elif dataset == 'nmbl_running':
                              'sex': 'unknown',
                              'model': 'normal'}}
     
-    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/nmbl_running'
-    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
+    # path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/nmbl_running'
+    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
     path_clean_dataset = os.path.join(path_data, dataset)
-    os.makedirs(path_clean_dataset, exist_ok=True)
-    
+    os.makedirs(path_clean_dataset, exist_ok=True)    
     
     # Loop over subjects
     for subject in os.listdir(path_original_dataset):
