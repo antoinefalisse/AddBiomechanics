@@ -1654,7 +1654,7 @@ elif dataset == 'perturbed_walking_dataset':
             'massKg': 78.1,
             'heightM': 1.67,
             'sex': 'unknown',
-            'model': 'normal'},
+            'model': 'exclude'},
         'pp_8': {
             'massKg': 57.6,
             'heightM': 1.53,
@@ -1694,7 +1694,7 @@ elif dataset == 'perturbed_walking_dataset':
             'massKg': 82.5,
             'heightM': 1.59,
             'sex': 'unknown',
-            'model': 'normal'},
+            'model': 'exclude'},
         'Patient6': {
             'massKg': 63.2,
             'heightM': 1.63,
