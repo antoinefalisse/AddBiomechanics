@@ -324,15 +324,15 @@
 
 
 # for n in sub_00_A sub_00_B sub_01_B sub_02_B sub_03_B sub_04_B sub_05_A sub_05_B sub_06_B sub_07_B sub_08_B sub_09_B sub_10_A sub_10_B sub_11_B sub_12_B;
-for n in sub_10_A sub_10_B;
-do
-	if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/tennis_dataset/$n/osim_results" ]; then
-		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/tennis_dataset/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/tennis_dataset/$n"
+# for n in sub_10_A sub_10_B;
+# do
+	# if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/tennis_dataset/$n/osim_results" ]; then
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/tennis_dataset/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/tennis_dataset/$n"
 		
-		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/tennis_dataset/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/tennis_dataset/$n/osim_results"
-	fi
+		# sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/tennis_dataset/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/tennis_dataset/$n/osim_results"
+	# fi
 	
-done;
+# done;
 
 # for n in pp_2 pp_3 pp_4 pp_8 pp_9 pp_10 pp_11 pp_12;
 
@@ -344,3 +344,13 @@ done;
 	# fi
 	
 # done;
+
+for n in subject01 subject02 subject03 subject04 subject08 subject10 subject11 subject17 subject19 subject20;
+do
+	if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/nmbl_running/$n/osim_results" ]; then
+		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/nmbl_running/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/nmbl_running/$n"
+		
+		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/nmbl_running/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/nmbl_running/$n/osim_results"
+	fi
+	
+done;
