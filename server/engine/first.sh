@@ -345,12 +345,20 @@
 	
 # done;
 
-for n in subject01 subject02 subject03 subject04 subject08 subject10 subject11 subject17 subject19 subject20;
-do
-	if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/nmbl_running/$n/osim_results" ]; then
-		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/nmbl_running/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/nmbl_running/$n"
+# for n in subject01 subject02 subject03 subject04 subject08 subject10 subject11 subject17 subject19 subject20;
+# do
+# 	if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/nmbl_running/$n/osim_results" ]; then
+# 		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/nmbl_running/$n/osim_results "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/nmbl_running/$n"
 		
-		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/nmbl_running/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/nmbl_running/$n/osim_results"
+# 		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.103.222:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/nmbl_running/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/nmbl_running/$n/osim_results"
+# 	fi
+	
+# done;
+
+for n in subject01;
+do
+	if [ ! -d "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/test_copy/$n/_results.json" ]; then	
+		sshpass -p 'Stanford!' scp -r clarkadmin@171.65.102.146:Documents/MyRepositories_Antoine/AddBiomechanics/server/data/test_copy/$n/_results.json "/mnt/g/My Drive/Projects/openpose-augmenter/Data_opensim/test_copy/$n"
 	fi
 	
 done;
