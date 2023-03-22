@@ -11,3 +11,5 @@ TODO
 .DS_Store
 /test_data
 .idea/
+
+server/data/opencap_dataset/*
