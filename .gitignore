@@ -13,3 +13,4 @@ TODO
 .idea/
 
 server/data/opencap_dataset/*
+server/data/opencap_dataset_video_OpenPose_1x1008_4scales_2-cameras_v0.15/*
