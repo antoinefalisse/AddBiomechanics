@@ -2158,7 +2158,7 @@ elif dataset == 'opencap_dataset':
     
             # Copy generic model
             if infoSubjects[subject]['model'] == 'normal':
-                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+                path_generic_model = os.path.join(path_data, 'PresetSkeletons', 'LaiArnold2107_OpenCapMocap.osim')
             else:
                 raise ValueError("not existing")
             path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
@@ -2193,7 +2193,7 @@ elif dataset == 'opencap_dataset_video':
 
     poseDetector = 'OpenPose_1x1008_4scales'
     cameraSetup = '2-cameras'
-    augmenter_model = 'v0.15'
+    augmenter_model = 'v0.2'
     
     infoSubjects = {'subject2': {'massKg': 78.2,
                              'heightM': 1.96,
