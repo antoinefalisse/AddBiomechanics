@@ -140,6 +140,31 @@ def processLocalSubjectFolder(path: str, outputName: str = None, href: str = '')
     else:
         regularizeJointAcc = 0
 
+    if 'dynamicsMarkerOffsets' in subjectJson:
+        dynamicsMarkerOffsets = subjectJson['dynamicsMarkerOffsets']
+    else:
+        dynamicsMarkerOffsets = False
+
+    if 'dynamicsMarkerWeight' in subjectJson:
+        dynamicsMarkerWeight = subjectJson['dynamicsMarkerWeight']
+    else:
+        dynamicsMarkerWeight = 50.0
+
+    if 'dynamicsJointWeight' in subjectJson:
+        dynamicsJointWeight = subjectJson['dynamicsJointWeight']
+    else:
+        dynamicsJointWeight = 0.01
+
+    if 'dynamicsRegularizePoses' in subjectJson:
+        dynamicsRegularizePoses = subjectJson['dynamicsRegularizePoses']
+    else:
+        dynamicsRegularizePoses = 0.01
+
+    if 'ignoreFootNotOverForcePlate' in subjectJson:
+        ignoreFootNotOverForcePlate = subjectJson['ignoreFootNotOverForcePlate']
+    else:
+        ignoreFootNotOverForcePlate = False
+
     if skeletonPreset == 'vicon' or skeletonPreset == 'cmu' or skeletonPreset == 'complete':
         footBodyNames = ['calcn_l', 'calcn_r']
     else:
@@ -220,8 +245,8 @@ def processLocalSubjectFolder(path: str, outputName: str = None, href: str = '')
     # 7. Process the trial
     markerFitter = nimble.biomechanics.MarkerFitter(
         skeleton, markerSet)
-    markerFitter.setInitialIKSatisfactoryLoss(0.005)
-    markerFitter.setInitialIKMaxRestarts(50)
+    markerFitter.setInitialIKSatisfactoryLoss(1e-5)
+    markerFitter.setInitialIKMaxRestarts(150)
     # markerFitter.setIterationLimit(40)
     markerFitter.setIterationLimit(500)
     markerFitter.setIgnoreJointLimits(ignoreJointLimits)
@@ -255,7 +280,49 @@ def processLocalSubjectFolder(path: str, outputName: str = None, href: str = '')
     markerTrials = []
     trialProcessingResults: List[Dict[str, Any]] = []
 
+    # Get the static trial, if it exists.
+    trialsNoStatic = list()
     for trialName in os.listdir(trialsFolderPath):
+        if trialName == 'static':
+            staticMarkers = dict()
+            c3dFilePath = os.path.join(trialsFolderPath, 'static', 'markers.c3d')
+            trcFilePath = os.path.join(trialsFolderPath, 'static', 'markers.trc')
+            if os.path.exists(c3dFilePath):
+                c3dFile: nimble.biomechanics.C3D = nimble.biomechanics.C3DLoader.loadC3D(
+                    c3dFilePath)
+                nimble.biomechanics.C3DLoader.fixupMarkerFlips(c3dFile)
+                markerFitter.autorotateC3D(c3dFile)
+                staticMarkers.update(c3dFile.markerTimesteps[0])
+
+            elif os.path.exists(trcFilePath):
+                trcFile: nimble.biomechanics.OpenSimTRC = nimble.biomechanics.OpenSimParser.loadTRC(
+                    trcFilePath)
+                staticMarkers.update(trcFile.markerTimesteps[0])
+
+            # Remove upper arm markers
+            # TODO include other upper body names
+            upperArmBodies = ['humerus', 'radius', 'ulna', 'hand']
+            markersToRemove = list()
+            for marker in staticMarkers.keys():
+                if marker in markerSet:
+                    bodyName = markerSet[marker][0].getName()
+                    for upperArmBody in upperArmBodies:
+                        if upperArmBody in bodyName:
+                            markersToRemove.append(marker)
+
+            print('Removing upper arm markers from the static pose...')
+            for marker in markersToRemove:
+                print(f'  --> {marker}')
+                staticMarkers.pop(marker)
+
+            zeroPose = np.zeros(skeleton.getNumDofs())
+            markerFitter.setStaticTrial(staticMarkers, zeroPose)
+            markerFitter.setStaticTrialWeight(50.0)
+        else:
+            trialsNoStatic.append(trialName)
+
+    # Process the non-"static" trials in the subject folder
+    for trialName in trialsNoStatic:
         trialNames.append(trialName)
         trialPath = trialsFolderPath + trialName + '/'
         trialProcessingResult: Dict[str, Any] = {}
@@ -283,6 +350,7 @@ def processLocalSubjectFolder(path: str, outputName: str = None, href: str = '')
             trialFramesPerSecond.append(trcFile.framesPerSecond)
             trialMarkerSet[trialName] = list(trcFile.markerLines.keys())
             grfFilePath = trialPath + 'grf.mot'
+            ignoreFootNotOverForcePlate = True # .mot files do not contain force plate geometry
             if os.path.exists(grfFilePath):
                 forcePlates: List[nimble.biomechanics.ForcePlate] = nimble.biomechanics.OpenSimParser.loadGRF(
                     grfFilePath, trcFile.framesPerSecond)
@@ -441,7 +509,8 @@ def processLocalSubjectFolder(path: str, outputName: str = None, href: str = '')
                 trialForcePlates,
                 trialFramesPerSecond,
                 markerTrials)
-            dynamicsFitter.estimateFootGroundContacts(dynamicsInit)
+            dynamicsFitter.estimateFootGroundContacts(dynamicsInit,
+                                                      ignoreFootNotOverForcePlate=ignoreFootNotOverForcePlate)
 
             print("Initial mass: " +
                   str(finalSkeleton.getMass()) + " kg", flush=True)
@@ -457,7 +526,8 @@ def processLocalSubjectFolder(path: str, outputName: str = None, href: str = '')
                 dynamicsInit,
                 useReactionWheels=useReactionWheels,
                 shiftGRF=shiftGRF,
-                maxTrialsToSolveMassOver=maxTrialsToSolveMassOver
+                maxTrialsToSolveMassOver=maxTrialsToSolveMassOver,
+                reoptimizeMarkerOffsets=dynamicsMarkerOffsets
             )
 
             # If initialization succeeded, we will proceed with the kitchen sink optimization.
@@ -469,8 +539,8 @@ def processLocalSubjectFolder(path: str, outputName: str = None, href: str = '')
                     goodFramesCount += sum(
                         [0 if missing else 1 for missing in trialMissingGRF])
                     totalFramesCount += len(trialMissingGRF)
-                print('Detected missing/bad GRF data on '+str(totalFramesCount -
-                      goodFramesCount)+'/'+str(totalFramesCount)+' frames', flush=True)
+                badFramesCount = totalFramesCount - goodFramesCount
+                print('Detected missing/bad GRF data on '+str(badFramesCount)+'/'+str(totalFramesCount)+' frames', flush=True)
                 if goodFramesCount == 0:
                     print('ERROR: we have no good frames of GRF data left after filtering out suspicious GRF frames. This '
                           'probably means input GRF data is badly miscalibrated with respect to marker data (maybe they '
@@ -486,16 +556,19 @@ def processLocalSubjectFolder(path: str, outputName: str = None, href: str = '')
                         nimble.biomechanics.DynamicsFitProblemConfig(
                             finalSkeleton)
                         .setDefaults(True)
-                        .setResidualWeight(4e-2 * tuneResidualLoss)
-                        .setMaxNumTrials(3)
+                        .setResidualWeight(1e-2 * tuneResidualLoss)
+                        .setMaxNumTrials(maxTrialsToSolveMassOver)
                         .setConstrainResidualsZero(False)
                         .setIncludeMasses(True)
                         .setMaxNumBlocksPerTrial(20)
                         # .setIncludeInertias(True)
                         # .setIncludeCOMs(True)
                         # .setIncludeBodyScales(True)
-                        .setIncludeMarkerOffsets(True)
+                        .setIncludeMarkerOffsets(dynamicsMarkerOffsets)
                         .setIncludePoses(True)
+                        .setJointWeight(dynamicsJointWeight)
+                        .setMarkerWeight(dynamicsMarkerWeight)
+                        .setRegularizePoses(dynamicsRegularizePoses)
                         .setRegularizeJointAcc(regularizeJointAcc))
 
                     # Now re-run a position-only optimization on every trial in the dataset
@@ -515,9 +588,13 @@ def processLocalSubjectFolder(path: str, outputName: str = None, href: str = '')
                                 finalSkeleton)
                             .setDefaults(True)
                             .setOnlyOneTrial(trial)
-                            .setResidualWeight(4e-2 * tuneResidualLoss)
+                            .setResidualWeight(1e-2 * tuneResidualLoss)
                             .setConstrainResidualsZero(False)
+                            .setIncludeMarkerOffsets(dynamicsMarkerOffsets)
                             .setIncludePoses(True)
+                            .setJointWeight(dynamicsJointWeight)
+                            .setMarkerWeight(dynamicsMarkerWeight)
+                            .setRegularizePoses(dynamicsRegularizePoses)
                             .setRegularizeJointAcc(regularizeJointAcc))
 
                     # Specifically optimize to 0-ish residuals, if user requests it
@@ -554,7 +631,8 @@ def processLocalSubjectFolder(path: str, outputName: str = None, href: str = '')
                     dynamicsInit,
                     useReactionWheels=True,
                     shiftGRF=shiftGRF,
-                    maxTrialsToSolveMassOver=maxTrialsToSolveMassOver
+                    maxTrialsToSolveMassOver=maxTrialsToSolveMassOver,
+                    reoptimizeMarkerOffsets=dynamicsMarkerOffsets
                 )
                 # TODO re-run position only optimization here?
 

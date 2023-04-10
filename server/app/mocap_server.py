@@ -170,15 +170,15 @@ class SubjectToProcess:
                 "Body": {
                     "Text": {
                         "Charset": CHARSET,
-                        "Data": "Your subject \"{0}\" has finished processing. Visit https://biomechnet.org/my_data/{1} to view and download. You can view in-browser visualizations of the uploaded trial data by clicking on each trial name.\n\nThank you for using BiomechNet!\n-BiomechNet team\n\nP.S: Do not reply to this email. To give feedback on BiomechNet, please contact the main author, Keenon Werling, directly at keenon@stanford.edu.".format(name, path),
+                        "Data":  "Your subject \"{0}\" has finished processing. Visit https://addbiomechanics.org/my_data/{1} to view and download. You can view in-browser visualizations of the uploaded trial data by clicking on each trial name.\n\nThank you for using AddBiomechanics!\n-AddBiomechanics team\n\nP.S: Do not reply to this email. To give feedback on AddBiomechanics or if you have questions, please visit the AddBiomechanics forum on SimTK: https://simtk.org/plugins/phpBB/indexPhpbb.php?group_id=2402&pluginname=phpBB.format(name, path)"
                     }
                 },
                 "Subject": {
                     "Charset": CHARSET,
-                    "Data": "BiomechNet: \"{0}\" Finished Processing".format(name),
+                    "Data": "AddBiomechanics: \"{0}\" Finished Processing".format(name),
                 },
             },
-            Source="noreply@biomechnet.org",
+            Source="noreply@addbiomechanics.org",
         )
 
     def getHref(self):
@@ -261,15 +261,32 @@ class SubjectToProcess:
                         elapsedSeconds = now - lastFlushed
 
                         # Only flush in bulk, and only every 3 seconds
-                        if elapsedSeconds > 3.0:
-                            # Send to PubSub
-                            logLine: Dict[str, str] = {}
-                            logLine['lines'] = unflushedLines
-                            logLine['timestamp'] = now * 1000
-                            self.index.pubSub.sendMessage(
-                                '/LOG/'+procLogTopic, logLine)
-                            lastFlushed = now
-                            unflushedLines = []
+                        if elapsedSeconds > 3.0 and len(unflushedLines) > 0:
+                            # Send to PubSub, in packets of at most 20 lines at a time
+                            if len(unflushedLines) > 20:
+                                toSend = unflushedLines[:20]
+                                logLine: Dict[str, str] = {}
+                                logLine['lines'] = toSend
+                                logLine['timestamp'] = now * 1000
+                                try:
+                                    self.index.pubSub.sendMessage(
+                                        '/LOG/'+procLogTopic, logLine)
+                                except e:
+                                    print('Failed to send live log message: '+str(e), flush=True)
+                                unflushedLines = unflushedLines[20:]
+                                # Explicitly do NOT reset lastFlushed on this branch, because we want to immediately send the next batch of lines, until we've exhausted the queue.
+                            else:
+                                logLine: Dict[str, str] = {}
+                                logLine['lines'] = unflushedLines
+                                logLine['timestamp'] = now * 1000
+                                try:
+                                    self.index.pubSub.sendMessage(
+                                        '/LOG/'+procLogTopic, logLine)
+                                except e:
+                                    print('Failed to send live log message: '+str(e), flush=True)
+                                unflushedLines = []
+                                # Reset lastFlushed, because we've sent everything, and we want to wait 3 seconds before sending again.
+                                lastFlushed = now
                     # Wait for the process to exit
                     exitCode = 'Failed to exit after 60 seconds'
                     for i in range(20):
@@ -284,8 +301,11 @@ class SubjectToProcess:
                             logLine: Dict[str, str] = {}
                             logLine['line'] = line
                             logLine['timestamp'] = time.time() * 1000
-                            self.index.pubSub.sendMessage(
-                                '/LOG/'+procLogTopic, logLine)
+                            try:
+                                self.index.pubSub.sendMessage(
+                                    '/LOG/'+procLogTopic, logLine)
+                            except e:
+                                print('Failed to send live log message: '+str(e), flush=True)
                     line = 'exit: '+str(exitCode)
                     # Send to the log
                     logFile.write(line.encode("utf-8"))
@@ -293,8 +313,11 @@ class SubjectToProcess:
                     logLine: Dict[str, str] = {}
                     logLine['line'] = line
                     logLine['timestamp'] = time.time() * 1000
-                    self.index.pubSub.sendMessage(
-                        '/LOG/'+procLogTopic, logLine)
+                    try:
+                        self.index.pubSub.sendMessage(
+                            '/LOG/'+procLogTopic, logLine)
+                    except e:
+                        print('Failed to send live log message: '+str(e), flush=True)
                     print('Process return code: '+str(exitCode), flush=True)
 
             # 5. Upload the results back to S3
@@ -538,8 +561,11 @@ class MocapServer:
 
     def sendPong(self):
         print('Sending liveness pong as '+self.serverId)
-        self.index.pubSub.sendMessage(
-            '/PONG/'+self.serverId, {})
+        try:
+            self.index.pubSub.sendMessage(
+                '/PONG/'+self.serverId, {})
+        except e:
+            print('Failed to send liveness pong: '+str(e))
 
     def onPongReceived(self, topic: str, payload: bytes):
         """
@@ -590,7 +616,10 @@ class MocapServer:
                     pass
                 else:
                     # Send a ping, which will get an asynchronous response which will eventually update self.lastSeenPong[k]
-                    self.index.pubSub.sendMessage('/PING/'+k, {})
+                    try:
+                        self.index.pubSub.sendMessage('/PING/'+k, {})
+                    except e:
+                        print('Failed to send ping to '+k+': '+str(e), flush=True)
 
             # Check for death
             for k in statusFiles:

@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.scss";
 import "bootstrap";
+import { Link } from "react-router-dom";
 import { Row, Col, Card } from "react-bootstrap";
 import Login from "./pages/auth/Login";
 import Logout from "./pages/auth/Logout";
@@ -18,13 +19,15 @@ import SearchView from "./pages/search/SearchView";
 import ProfileView from "./pages/profile/ProfileView";
 import ProcessingServerStatus from "./pages/processing_servers/ProcessingServerStatus";
 import ErrorDisplay from "./layouts/ErrorDisplay";
-import { ReactiveIndex, ReactiveSearchList } from "./state/ReactiveS3";
+import { ReactiveIndex } from "./state/ReactiveS3";
 import MocapS3Cursor from "./state/MocapS3Cursor";
 import Amplify, { API, Auth } from "aws-amplify";
 import awsExports from "./aws-exports";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import RequireAuth from "./pages/auth/RequireAuth";
 import RobustMqtt from "./state/RobustMqtt";
+import {toast } from 'react-toastify';
+import { showToast } from "./utils";
 
 // Verify TS is configured correctly
 if (
@@ -74,6 +77,21 @@ function afterLogin(email: string) {
         }
 
         cursor.subscribeToCloudProcessingServerPongs();
+
+        // Check if profile.json file is empty. This will show a toast asking users to create a profile after logging in.
+        // - If the file profile.json file does not exist, the toast is not shown. This is the case of a user logging in for the first time.
+        //   This way, we let users explore the tool the first time they log in, and we only ask them to create the profile the following times.
+        // - If the file profile.json file exists, the toast is shown only if there are no values on the file. This is true for users that have
+        //   never created a profile page, and for users that have removed their information from their profile page. 
+        if(cursor.myProfileJson && cursor.myProfileJson.values && [...cursor.myProfileJson.values.values()].every(value => value === '')) {
+
+          const CustomToastWithLink = () => (
+            <div>
+              We noticed you have not created a profile. Please click <Link to="/profile">here</Link> to create one!.
+            </div>
+          );
+          showToast(CustomToastWithLink, "info", toast.POSITION.BOTTOM_CENTER, 10000);
+        }
       })
       .catch((error) => {
         console.log("Got error with PostAuthAPI!");
@@ -110,13 +128,15 @@ ReactDOM.render(
             element={
               <SearchView cursor={cursor} />
             }
-          ></Route>
+          >
+          </Route>
           <Route
             path={"/profile/*"}
             element={
               <ProfileView cursor={cursor} />
             }
-          ></Route>
+          >
+          </Route>
           <Route
             path={"/server_status/*"}
             element={

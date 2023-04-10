@@ -54,26 +54,28 @@ class ReactiveJsonFile {
     cursor: ReactiveCursor;
     loading: boolean;
     path: string;
+    isPathGlobal: boolean;
     values: Map<string, any>;
     focused: Map<string, boolean>;
     lastUploadedValues: Map<string, any>;
     pendingTimeout: any | null;
     changeListeners: Array<() => void>;
 
-    constructor(cursor: ReactiveCursor, path: string) {
+    constructor(cursor: ReactiveCursor, path: string, isPathGlobal: boolean = false) {
         this.cursor = cursor;
         this.path = path;
+        this.isPathGlobal = isPathGlobal;
         this.values = new Map();
         this.focused = new Map();
         this.lastUploadedValues = new Map();
         this.pendingTimeout = null;
         this.changeListeners = [];
         this.loading = false;
-        this.pathChanged();
+        this.pathChanged(true);
 
         this.cursor.index.addLoadingListener((loading: boolean) => {
             if (!loading) {
-                this.pathChanged();
+                this.pathChanged(true);
             }
         });
 
@@ -96,10 +98,10 @@ class ReactiveJsonFile {
      * This will do a refresh of the contents of the file from S3
      */
     refreshFile = () => {
-        console.log("File exists: " + this.fileExist());
         if (this.fileExist()) {
             this.loading = true;
-            this.cursor.downloadText(this.path).then(action((text: string) => {
+            console.log("File exists: " + this.fileExist());
+            this.cursor.index.downloadText(this.getAbsolutePath()).then(action((text: string) => {
                 console.log("Downloaded text: " + text);
                 try {
                     let savedValues: Map<string, any> = new Map();
@@ -154,32 +156,60 @@ class ReactiveJsonFile {
      * @returns the absolute path of the file, relative to the cursor path
      */
     getAbsolutePath = () => {
-        let prefix = this.cursor.path;
-        if (!prefix.endsWith('/')) prefix += '/';
-        return prefix + this.path;
+        if (this.isPathGlobal) {
+            return this.path;
+        }
+        else {
+            let prefix = this.cursor.path;
+            if (!prefix.endsWith('/')) prefix += '/';
+            return prefix + this.path;
+        }
     };
 
     /**
      * This gets called right before the path changes, and leaves a chance to clean up values
      */
     pathWillChange = () => {
-        this.cursor.index.removeMetadataListener(this.getAbsolutePath(), this.onFileChanged);
+        // If `isPathGlobal` is true, that means that this file is relative to the root of the filesystem, 
+        // not relative to the cursor, so even as the cursor moves around, the path for this file won't 
+        // change. So in that case, we don't have to change our listeners.
+        if (!this.isPathGlobal) {
+            this.cursor.index.removeMetadataListener(this.getAbsolutePath(), this.onFileChanged);
+        }
     };
+
+    /**
+     * This can be called if we're a file with a global absolute path.
+     */
+    setGlobalPath = (path: string) => {
+        this.path = path;
+        this.pathChanged(true);
+    }
 
     /**
      * This gets called when the path has changed in the supporting cursor
      */
-    pathChanged = () => {
-        console.log('Adding listener to: '+ this.getAbsolutePath() );
-        this.cursor.index.addMetadataListener(this.getAbsolutePath(), this.onFileChanged);
-        this.refreshFile();
+    pathChanged = (forceRefreshEvenIfGlobal: boolean = false) => {
+        // If `isPathGlobal` is true, that means that this file is relative to the root of the filesystem, 
+        // not relative to the cursor, so even as the cursor moves around, the path for this file won't 
+        // change. So in that case, we don't have to change our listeners.
+        if (!this.isPathGlobal || forceRefreshEvenIfGlobal) {
+            console.log('Adding listener to: '+ this.getAbsolutePath() );
+            this.cursor.index.addMetadataListener(this.getAbsolutePath(), this.onFileChanged);
+            this.refreshFile();
+        }
     };
 
     /**
      * @returns True if the file currently exists, false otherwise
      */
     fileExist = () => {
-        return this.cursor.getExists(this.path);
+        if (this.isPathGlobal) {
+            let cursorGlobal:ReactiveCursor = new ReactiveCursor(this.cursor.index, this.getAbsolutePath())
+            return cursorGlobal.getExistsAbsolute();
+        }
+        else
+            return this.cursor.getExists(this.path);
     };
 
     /**
@@ -220,27 +250,51 @@ class ReactiveJsonFile {
         });
         let json = JSON.stringify(object);
         console.log("Uploading object");
-        return this.cursor.uploadChild(this.path, json).then(action(() => {
-            console.log("Uploaded successfully");
-            // Update the lastUploadedValues, which we'll reset to if we 
-            this.lastUploadedValues.clear();
-            this.values.forEach((v, k) => {
-                this.lastUploadedValues.set(k, v);
-            });
-            // Call all the change listeners
-            this.changeListeners.forEach((listener) => listener());
-        })).catch(action((e) => {
-            console.error("Caught error uploading JSON, reverting to last uploaded values", e);
+        if (this.isPathGlobal) {
+            return this.cursor.uploadGlobal(this.path, json).then(action(() => {
+                console.log("Uploaded successfully");
+                // Update the lastUploadedValues, which we'll reset to if we 
+                this.lastUploadedValues.clear();
+                this.values.forEach((v, k) => {
+                    this.lastUploadedValues.set(k, v);
+                });
+                // Call all the change listeners
+                this.changeListeners.forEach((listener) => listener());
+            })).catch(action((e) => {
+                console.error("Caught error uploading JSON, reverting to last uploaded values", e);
 
-            this.values.clear();
-            this.lastUploadedValues.forEach((v, k) => {
-                this.values.set(k, v);
-            });
-            // Call all the change listeners
-            this.changeListeners.forEach((listener) => listener());
+                this.values.clear();
+                this.lastUploadedValues.forEach((v, k) => {
+                    this.values.set(k, v);
+                });
+                // Call all the change listeners
+                this.changeListeners.forEach((listener) => listener());
 
-            throw e;
-        }));
+                throw e;
+            }));
+        } else {
+            return this.cursor.uploadChild(this.path, json).then(action(() => {
+                console.log("Uploaded successfully");
+                // Update the lastUploadedValues, which we'll reset to if we 
+                this.lastUploadedValues.clear();
+                this.values.forEach((v, k) => {
+                    this.lastUploadedValues.set(k, v);
+                });
+                // Call all the change listeners
+                this.changeListeners.forEach((listener) => listener());
+            })).catch(action((e) => {
+                console.error("Caught error uploading JSON, reverting to last uploaded values", e);
+
+                this.values.clear();
+                this.lastUploadedValues.forEach((v, k) => {
+                    this.values.set(k, v);
+                });
+                // Call all the change listeners
+                this.changeListeners.forEach((listener) => listener());
+
+                throw e;
+            }));
+        }
     };
 
     /**
@@ -249,7 +303,7 @@ class ReactiveJsonFile {
      * @param key 
      * @param value 
      */
-    setAttribute = (key: string, value: any, uploadImmediate?: boolean) => {
+    setAttribute = action((key: string, value: any, uploadImmediate?: boolean) => {
         this.values.set(key, value);
         if (uploadImmediate) {
             this.uploadNow();
@@ -257,7 +311,7 @@ class ReactiveJsonFile {
         else {
             this.restartUploadTimer();
         }
-    };
+    });
 
     /**
      * When called, this starts a timer to upload in a few hundred milliseconds.
@@ -318,8 +372,8 @@ class ReactiveTextFile {
         console.log("File exists: " + this.fileExist());
         if (this.fileExist()) {
             this.loading = true;
-            this.cursor.downloadText(this.path).then(action((text: string) => {
-                console.log("Downloaded text: " + text);
+            const absolutePath = this.getAbsolutePath();
+            this.cursor.index.downloadText(absolutePath).then(action((text: string) => {
                 this.text = text;
             })).finally(action(() => {
                 this.loading = false;
@@ -351,6 +405,7 @@ class ReactiveTextFile {
     getAbsolutePath = () => {
         let prefix = this.cursor.path;
         if (!prefix.endsWith('/')) prefix += '/';
+        console.log("Getting absolute path. Prefix = "+prefix+", path="+this.path);
         return prefix + this.path;
     };
 
@@ -482,10 +537,10 @@ class ReactiveCursor {
      * 
      * @param path The path of the JSON file object to retrieve or create
      */
-    getJsonFile = (path: string) => {
+    getJsonFile = (path: string, isGlobalPath:boolean = false) => {
         let file = this.jsonFiles.get(path);
         if (file == null) {
-            file = new ReactiveJsonFile(this, path);
+            file = new ReactiveJsonFile(this, path, isGlobalPath);
             this.jsonFiles.set(path, file);
         }
         return file;
@@ -552,6 +607,18 @@ class ReactiveCursor {
      * @returns True if the file pointed to at "path" exists in S3
      */
     getExists = (path?: string) => {
+        if (path == null) {
+            return this.metadata != null;
+        }
+        else {
+            return this.getChildMetadata(path) != null;
+        }
+    };
+
+    /**
+     * @returns True if the file pointed to at "path" exists in S3
+     */
+    getExistsAbsolute = (path?: string) => {
         if (path == null) {
             return this.metadata != null;
         }
@@ -692,6 +759,13 @@ class ReactiveCursor {
     };
 
     /**
+     * Tries to upload a file using a global path
+     * @returns a promise for successful upload
+     */
+    uploadGlobal = (globalPath: string, contents: File | string, progressCallback: (percentage: number) => void = () => { }) => {
+        return this.index.upload(globalPath, contents, progressCallback);
+    };
+    /**
      * This actually downloads a file from S3, if the browser allows it
      */
     downloadFile = (childPath?: string) => {
@@ -781,38 +855,6 @@ class ReactiveCursor {
     };
 }
 
-class ReactiveSearchList {
-    index: ReactiveIndex;
-    query: string;
-    results: Map<string, ReactiveFileMetadata>;
-
-    constructor(index: ReactiveIndex, query: string) {
-        this.index = index;
-        this.query = query;
-        this.results = this.index.searchPathsContaining(query);
-
-        makeObservable(this, {
-            results: observable,
-        });
-    }
-
-    startListening = () => {
-        console.log("Start listening to search updates");
-        this.index.addSearchListener(this.query, this.searchListener);
-        this.results = this.index.searchPathsContaining(this.query);
-    }
-
-    stopListening = () => {
-        console.log("Stop listening to search updates");
-        this.index.removeSearchListener(this.query, this.searchListener);
-    }
-
-    searchListener = action((results: Map<string, ReactiveFileMetadata>) => {
-        console.log("Got search update");
-        this.results = results;
-    });
-}
-
 /// This holds the low-level copy of the S3 output, without nulls
 type ReactiveFileMetadata = {
     key: string;
@@ -840,12 +882,14 @@ class ReactiveIndex {
     listenersEnabled: boolean = true;
     childrenListeners: Map<string, Array<(children: Map<string, ReactiveFileMetadata>) => void>> = new Map();
     childrenLastNotified: Map<string, Map<string, ReactiveFileMetadata>> = new Map();
-    searchListeners: Map<string, Array<(results: Map<string, ReactiveFileMetadata>) => void>> = new Map();
-    searchLastNotified: Map<string, Map<string, ReactiveFileMetadata>> = new Map();
 
     // We initialize as "loading", because we haven't loaded the relevant file index yet
     loading: boolean = true;
     loadingListeners: Array<(loading: boolean) => void> = [];
+
+    // These are listeners that fire whenever anything in the index changes. These are cheaper to use than childrenListeners on "/", but 
+    // are functionally basically the same thing.
+    changeListeners: Array<() => void> = [];
 
     // This holds network error messages, one per key. Individual keys identify different errors that may have independent lifetimes.
     // For example, an upload request may fail, and then retry and eventually resolve, with the key "UPLOAD", while a websocket glitch
@@ -947,7 +991,16 @@ class ReactiveIndex {
                 throw e;
             });
         });
-        }
+    }
+
+    /**
+     * This checks if any files exist in our index that contain the given userId.
+     * 
+     * Note, this does NOT download anything, it just uses our existing `files` map, so it's safe to call from View code.
+     */
+    isUserValid = (userId: string) => {
+        return [...this.files.keys()].filter((fileName) => fileName.indexOf(userId) != -1).length > 0;
+    }
 
     /**
      * This attempts to delete a file in S3, and notify PubSub of having done so.
@@ -1159,6 +1212,9 @@ class ReactiveIndex {
      */
     _updateListeners = () => {
         if (!this.listenersEnabled) return;
+        this.changeListeners.forEach((listener) => {
+            listener();
+        });
         this.childrenListeners.forEach((listeners, key: string) => {
             let children = this.getChildren(key);
 
@@ -1169,21 +1225,6 @@ class ReactiveIndex {
             }
 
             this.childrenLastNotified.set(key, children);
-        });
-        this.searchListeners.forEach((listeners, query: string) => {
-            let results = this.searchPathsContaining(query);
-
-            if (JSON.stringify([...(this.searchLastNotified.get(query) ?? new Map())].sort()) !== JSON.stringify([...results].sort())) {
-                console.log("Search changed for "+query, results);
-                for (let listener of listeners) {
-                    listener(results);
-                }
-            }
-            else {
-                console.log("Search did not change for "+query, results);
-            }
-
-            this.searchLastNotified.set(query, results);
         });
     };
 
@@ -1563,30 +1604,6 @@ class ReactiveIndex {
     /**
      * Fires whenever the set of children of a given path changes (either added or deleted)
      * 
-     * @param query The string to check for paths containing
-     */
-    addSearchListener = (query: string, onChange: (children: Map<string, ReactiveFileMetadata>) => void) => {
-        if (!this.searchListeners.has(query)) {
-            this.searchListeners.set(query, []);
-        }
-        this.searchListeners.get(query)?.push(onChange);
-    };
-
-    /**
-     * Fires whenever the set of children of a given path changes (either added or deleted)
-     * 
-     * @param query The string to check for paths containing
-     */
-    removeSearchListener = (query: string, onChange: (children: Map<string, ReactiveFileMetadata>) => void) => {
-        const index: number = this.searchListeners.get(query)?.indexOf(onChange) ?? -1;
-        if (index !== -1) {
-            this.searchListeners.get(query)?.splice(index, 1);
-        }
-    };
-
-    /**
-     * Fires whenever the set of children of a given path changes (either added or deleted)
-     * 
      * @param path The folder path to listen for
      */
     addChildrenListener = (path: string, onChange: (children: Map<string, ReactiveFileMetadata>) => void) => {
@@ -1594,6 +1611,13 @@ class ReactiveIndex {
             this.childrenListeners.set(path, []);
         }
         this.childrenListeners.get(path)?.push(onChange);
+    };
+
+    /**
+     * Fires whenever any file changes (either added or deleted)
+     */
+    addChangeListener = (onChange: () => void) => {
+        this.changeListeners.push(onChange);
     };
 
     /**
@@ -1637,4 +1661,4 @@ class ReactiveIndex {
     }
 }
 
-export { ReactiveIndex, ReactiveCursor, ReactiveSearchList, ReactiveJsonFile, ReactiveTextFile };
+export { ReactiveIndex, ReactiveCursor, ReactiveJsonFile, ReactiveTextFile };
