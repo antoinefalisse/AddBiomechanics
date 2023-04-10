@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'opencap_dataset_video'
+dataset = 'balance_dataset'
 
 def strip(y):
     return y.replace(" ", "")
@@ -302,7 +302,8 @@ elif dataset == 'balance_dataset':
                              'sex': 'male',
                              'model': 'normal'}}
     
-    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/balance_dataset_cleaned'
+    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/balance_dataset_cleaned'
+    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/balance_dataset_cleaned'
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)
     
