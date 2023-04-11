@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'balance_dataset'
+dataset = 'toeheel_walking_dataset'
 
 def strip(y):
     return y.replace(" ", "")
@@ -1125,8 +1125,8 @@ elif dataset == 'running_leuven2_dataset':
                 
 elif dataset == 'toeheel_walking_dataset':
     
-    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/toeheel_walking_dataset'
-    # path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset'
+    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/toeheel_walking_dataset'
+    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/toeheel_walking_dataset'
 
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)
@@ -1187,8 +1187,15 @@ elif dataset == 'toeheel_walking_dataset':
             for file in os.listdir(path_original_subject):
                 if not '.trc' in file:
                     continue
+
+                if not '_time_' in file:
+                    continue
+
+                # Rename file, remoce _time_ and _fr
+                filename = file.replace('_time_', '')
+                filename = filename.replace('_fr', '')
                 
-                path_trial = os.path.join(path_trials, file[:-4])
+                path_trial = os.path.join(path_trials, filename[:-4])
                 os.makedirs(path_trial, exist_ok=True)
                 
                 path_generic_trc = os.path.join(path_original_subject, file)
