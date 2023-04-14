@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'hamner2013'
+dataset = 'karate_dataset'
 
 def strip(y):
     return y.replace(" ", "")
@@ -1399,186 +1399,187 @@ elif dataset == 'pitching_dataset':
 elif dataset == 'karate_dataset':
     
     infoSubjects = {
-        'B0367': {'model': 'exclude'},
-        'B0368': {'model': 'exclude'},
+        # 'B0367': {'model': 'exclude'},
+        # 'B0368': {'model': 'exclude'},
         'B0369': {
             'massKg': 88,
             'heightM': 1.82,
             'sex': 'male',
             'model': 'normal'},
-        'B0370': {
-            'massKg': 71,
-            'heightM': 1.78,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0371': {
-            'massKg': 78,
-            'heightM': 1.72,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0372': {
-            'massKg': 74,
-            'heightM': 1.72,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0373': {
-            'massKg': 62,
-            'heightM': 1.68,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0374': {
-            'massKg': 42,
-            'heightM': 1.50,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0375': {
-            'massKg': 45,
-            'heightM': 1.52,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0376': {
-            'massKg': 35,
-            'heightM': 1.43,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0377': {
-            'massKg': 44,
-            'heightM': 1.54,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0378': {
-            'massKg': 49,
-            'heightM': 1.56,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0379': {
-            'massKg': 35,
-            'heightM': 1.45,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0380': {
-            'massKg': 30,
-            'heightM': 1.44,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0381': {
-            'massKg': 50,
-            'heightM': 1.61,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0382': {
-            'massKg': 86,
-            'heightM': 1.82,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0383': {
-            'massKg': 36,
-            'heightM': 1.42,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0384': {
-            'massKg': 44,
-            'heightM': 1.51,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0385': {
-            'massKg': 42,
-            'heightM': 1.50,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0386': {
-            'massKg': 45,
-            'heightM': 1.52,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0387': {
-            'massKg': 52,
-            'heightM': 1.58,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0388': {
-            'massKg': 54,
-            'heightM': 1.57,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0389': {
-            'massKg': 52,
-            'heightM': 1.53,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0391': {
-            'massKg': 80,
-            'heightM': 1.80,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0392': {
-            'massKg': 118,
-            'heightM': 1.92,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0393': {
-            'massKg': 40,
-            'heightM': 1.60,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0394': {
-            'massKg': 30,
-            'heightM': 1.42,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0395': {
-            'massKg': 45,
-            'heightM': 1.58,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0396': {
-            'massKg': 47,
-            'heightM': 1.64,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0398': {
-            'massKg': 62,
-            'heightM': 1.76,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0399': {
-            'massKg': 70,
-            'heightM': 1.66,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0400': {
-            'massKg': 35,
-            'heightM': 1.50,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0401': {
-            'massKg': 39,
-            'heightM': 1.52,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0402': {
-            'massKg': 34,
-            'heightM': 1.50,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0403': {
-            'massKg': 32,
-            'heightM': 1.43,
-            'sex': 'male',
-            'model': 'normal'},
-        'B0404': {
-            'massKg': 67,
-            'heightM': 1.63,
-            'sex': 'female',
-            'model': 'normal'},
-        'B0405': {
-            'massKg': 62,
-            'heightM': 1.62,
-            'sex': 'female',
-            'model': 'normal'}}
+        # 'B0370': {
+        #     'massKg': 71,
+        #     'heightM': 1.78,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0371': {
+        #     'massKg': 78,
+        #     'heightM': 1.72,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0372': {
+        #     'massKg': 74,
+        #     'heightM': 1.72,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0373': {
+        #     'massKg': 62,
+        #     'heightM': 1.68,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0374': {
+        #     'massKg': 42,
+        #     'heightM': 1.50,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0375': {
+        #     'massKg': 45,
+        #     'heightM': 1.52,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0376': {
+        #     'massKg': 35,
+        #     'heightM': 1.43,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0377': {
+        #     'massKg': 44,
+        #     'heightM': 1.54,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0378': {
+        #     'massKg': 49,
+        #     'heightM': 1.56,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0379': {
+        #     'massKg': 35,
+        #     'heightM': 1.45,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0380': {
+        #     'massKg': 30,
+        #     'heightM': 1.44,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0381': {
+        #     'massKg': 50,
+        #     'heightM': 1.61,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0382': {
+        #     'massKg': 86,
+        #     'heightM': 1.82,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0383': {
+        #     'massKg': 36,
+        #     'heightM': 1.42,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0384': {
+        #     'massKg': 44,
+        #     'heightM': 1.51,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0385': {
+        #     'massKg': 42,
+        #     'heightM': 1.50,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0386': {
+        #     'massKg': 45,
+        #     'heightM': 1.52,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0387': {
+        #     'massKg': 52,
+        #     'heightM': 1.58,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0388': {
+        #     'massKg': 54,
+        #     'heightM': 1.57,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0389': {
+        #     'massKg': 52,
+        #     'heightM': 1.53,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0391': {
+        #     'massKg': 80,
+        #     'heightM': 1.80,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0392': {
+        #     'massKg': 118,
+        #     'heightM': 1.92,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0393': {
+        #     'massKg': 40,
+        #     'heightM': 1.60,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0394': {
+        #     'massKg': 30,
+        #     'heightM': 1.42,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0395': {
+        #     'massKg': 45,
+        #     'heightM': 1.58,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0396': {
+        #     'massKg': 47,
+        #     'heightM': 1.64,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0398': {
+        #     'massKg': 62,
+        #     'heightM': 1.76,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0399': {
+        #     'massKg': 70,
+        #     'heightM': 1.66,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0400': {
+        #     'massKg': 35,
+        #     'heightM': 1.50,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0401': {
+        #     'massKg': 39,
+        #     'heightM': 1.52,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0402': {
+        #     'massKg': 34,
+        #     'heightM': 1.50,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0403': {
+        #     'massKg': 32,
+        #     'heightM': 1.43,
+        #     'sex': 'male',
+        #     'model': 'normal'},
+        # 'B0404': {
+        #     'massKg': 67,
+        #     'heightM': 1.63,
+        #     'sex': 'female',
+        #     'model': 'normal'},
+        # 'B0405': {
+        #     'massKg': 62,
+        #     'heightM': 1.62,
+        #     'sex': 'female',
+        #     'model': 'normal'}
+        }
     
-    # path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/karate_dataset'
-    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/karate_dataset'
+    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/karate_dataset'
+    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/karate_dataset'
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)
     
@@ -1607,7 +1608,7 @@ elif dataset == 'karate_dataset':
         
                 # Copy generic model
                 if infoSubjects[subject]['model'] == 'normal':
-                    path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+                    path_generic_model = os.path.join(path_original_dataset, 'model_markers_new.osim')
                 else:
                     raise ValueError("not existing")
                 path_generic_model_end = os.path.join(pathSubjectSession, 'unscaled_generic.osim')
@@ -2527,7 +2528,7 @@ elif dataset == 'hamner2013':
                              'sex': 'male',
                              'model': 'normal'}}
     
-    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/Hamner2013/Formatted'
+    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/Hamner2013/Formatted_2'
     # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)    
