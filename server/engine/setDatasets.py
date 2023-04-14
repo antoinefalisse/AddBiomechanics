@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'toeheel_walking_dataset'
+dataset = 'hamner2013'
 
 def strip(y):
     return y.replace(" ", "")
@@ -2291,5 +2291,289 @@ elif dataset == 'opencap_dataset_video':
                 os.makedirs(path_trial, exist_ok=True)
                 
                 path_generic_trc = os.path.join(path_original_subject, file)
+                path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                shutil.copy2(path_generic_trc, path_generic_trc_end)
+
+elif dataset == 'nmbl_running':
+    
+    infoSubjects = {'subject01': {'massKg': 72.8,
+                             'heightM': 1.80,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject02': {'massKg': 76.5,
+                             'heightM': 1.85,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject03': {'massKg': 64.0,
+                             'heightM': 1.77,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject04': {'massKg': 80.5,
+                             'heightM': 1.76,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject08': {'massKg': 82.4,
+                             'heightM': 1.78,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject10': {'massKg': 69.3,
+                             'heightM': 1.75,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject11': {'massKg': 69.4,
+                             'heightM': 1.77,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject17': {'massKg': 68.5,
+                             'heightM': 1.75,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject19': {'massKg': 65.1,
+                             'heightM': 1.75,
+                             'sex': 'unknown',
+                             'model': 'normal'},
+                    'subject20': {'massKg': 67.2,
+                             'heightM': 1.75,
+                             'sex': 'unknown',
+                             'model': 'normal'}}
+    
+    # path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/nmbl_running'
+    path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):
+            
+            if infoSubjects[subject]['model'] == 'exclude':
+                print('Exclude subject {}'.format(subject))
+                continue
+            
+            # Create new subject folder
+            path_subject = os.path.join(path_clean_dataset, subject)
+            os.makedirs(path_subject, exist_ok=True)
+    
+            # Copy generic model
+            if infoSubjects[subject]['model'] == 'normal':
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+            else:
+                raise ValueError("not existing")
+            path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+            shutil.copy2(path_generic_model, path_generic_model_end)
+            
+            # Dump generic demographics
+            outfile = os.path.join(path_subject, '_subject.json')
+            subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                            'heightM': infoSubjects[subject]['heightM'],
+                            'sex': infoSubjects[subject]['sex'],
+                            'skeletonPreset': 'custom'}
+            with open(outfile, "w") as outfile:
+                json.dump(subject_data, outfile)
+                
+            # Re-organize marker data            
+            path_original_subject = os.path.join(path_original_dataset, subject, 'ExportedData')
+            path_trials = os.path.join(path_subject, 'trials')            
+            
+            os.makedirs(path_trials, exist_ok=True)
+            for file in os.listdir(path_original_subject):
+                if not '.trc' in file:
+                    continue
+                
+                if 'static' in file.lower():
+                    if not '_study_rot.trc' in file.lower():
+                        continue
+                
+                path_trial = os.path.join(path_trials, file[:-4])
+                os.makedirs(path_trial, exist_ok=True)
+                
+                path_generic_trc = os.path.join(path_original_subject, file)
+                path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                shutil.copy2(path_generic_trc, path_generic_trc_end)
+
+elif dataset == 'opencap_dataset':
+    
+    infoSubjects = {'subject2': {'massKg': 78.2,
+                             'heightM': 1.96,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject3': {'massKg': 63.5,
+                             'heightM': 1.69,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'subject4': {'massKg': 62.6,
+                             'heightM': 1.68,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'subject5': {'massKg': 79.4,
+                             'heightM': 1.85,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject6': {'massKg': 59.0,
+                             'heightM': 1.65,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'subject7': {'massKg': 61.2,
+                             'heightM': 1.68,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'subject8': {'massKg': 59.4,
+                             'heightM': 1.64,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'subject9': {'massKg': 75.7,
+                             'heightM': 1.85,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject10': {'massKg': 60.0,
+                             'heightM': 1.60,
+                             'sex': 'female',
+                             'model': 'normal'},
+                    'subject11': {'massKg': 92.9,
+                             'heightM': 1.84,
+                             'sex': 'male',
+                             'model': 'normal'}}
+    
+    path_original_dataset = 'C:/MyDriveSym/Projects/mobilecap/Data/Data_paper/LabValidation_withoutVideos'
+    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)
+
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):
+            
+            if infoSubjects[subject]['model'] == 'exclude':
+                print('Exclude subject {}'.format(subject))
+                continue
+            
+            # Create new subject folder
+            path_subject = os.path.join(path_clean_dataset, subject)
+            os.makedirs(path_subject, exist_ok=True)
+    
+            # Copy generic model
+            if infoSubjects[subject]['model'] == 'normal':
+                path_generic_model = os.path.join(path_data, 'PresetSkeletons', 'LaiArnold2107_OpenCapMocap.osim')
+            else:
+                raise ValueError("not existing")
+            path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+            shutil.copy2(path_generic_model, path_generic_model_end)
+            
+            # Dump generic demographics
+            outfile = os.path.join(path_subject, '_subject.json')
+            subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                            'heightM': infoSubjects[subject]['heightM'],
+                            'sex': infoSubjects[subject]['sex'],
+                            'skeletonPreset': 'custom'}
+            with open(outfile, "w") as outfile:
+                json.dump(subject_data, outfile)
+                
+            # Re-organize marker data            
+            path_original_subject = os.path.join(path_original_dataset, subject, 'MarkerData', 'Mocap')
+            path_trials = os.path.join(path_subject, 'trials')            
+            
+            os.makedirs(path_trials, exist_ok=True)
+            for file in os.listdir(path_original_subject):
+                if not '.trc' in file:
+                    continue
+                
+                path_trial = os.path.join(path_trials, file[:-4])
+                os.makedirs(path_trial, exist_ok=True)
+                
+                path_generic_trc = os.path.join(path_original_subject, file)
+                path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                shutil.copy2(path_generic_trc, path_generic_trc_end)
+
+elif dataset == 'hamner2013':
+    
+    infoSubjects = {'subject01': {'massKg': 72.8,
+                             'heightM': 1.77,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject02': {'massKg': 76.5,
+                             'heightM': 1.82,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject03': {'massKg': 64.0,
+                             'heightM': 1.78,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject04': {'massKg': 80.5,
+                             'heightM': 1.77,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject08': {'massKg': 82.4,
+                             'heightM': 1.79,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject10': {'massKg': 69.3,
+                             'heightM': 1.70,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject11': {'massKg': 69.4,
+                             'heightM': 1.74,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject17': {'massKg': 68.5,
+                             'heightM': 1.68,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject19': {'massKg': 65.1,
+                             'heightM': 1.72,
+                             'sex': 'male',
+                             'model': 'normal'},
+                    'subject20': {'massKg': 67.2,
+                             'heightM': 1.70,
+                             'sex': 'male',
+                             'model': 'normal'}}
+    
+    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/Hamner2013/Formatted'
+    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):
+            
+            if infoSubjects[subject]['model'] == 'exclude':
+                print('Exclude subject {}'.format(subject))
+                continue
+            
+            # Create new subject folder
+            path_subject = os.path.join(path_clean_dataset, subject)
+            os.makedirs(path_subject, exist_ok=True)
+    
+            # Copy generic model
+            if infoSubjects[subject]['model'] == 'normal':
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+            else:
+                raise ValueError("not existing")
+            path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+            shutil.copy2(path_generic_model, path_generic_model_end)
+            
+            # Dump generic demographics
+            outfile = os.path.join(path_subject, '_subject.json')
+            subject_data = {'massKg': infoSubjects[subject]['massKg'],
+                            'heightM': infoSubjects[subject]['heightM'],
+                            'sex': infoSubjects[subject]['sex'],
+                            'skeletonPreset': 'custom'}
+            with open(outfile, "w") as outfile:
+                json.dump(subject_data, outfile)
+                
+            # Re-organize marker data            
+            path_original_subject = os.path.join(path_original_dataset, subject, 'trials')
+            path_trials = os.path.join(path_subject, 'trials')            
+            
+            os.makedirs(path_trials, exist_ok=True)
+            for file in os.listdir(path_original_subject):
+
+                if not os.path.isdir(os.path.join(path_original_subject, file)):
+                    continue
+                
+                path_trial = os.path.join(path_trials, file)
+                os.makedirs(path_trial, exist_ok=True)
+                
+                path_generic_trc = os.path.join(path_original_subject, file, 'markers.trc')
                 path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
                 shutil.copy2(path_generic_trc, path_generic_trc_end)
