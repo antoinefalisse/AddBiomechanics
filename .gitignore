@@ -19,3 +19,4 @@ server/data/balance_dataset/*
 server/data/toeheel_walking_dataset/*
 server/data/hamner2013/*
 server/data/karate_dataset/*
+server/data/totalcapture/*
