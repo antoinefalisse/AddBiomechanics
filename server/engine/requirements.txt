@@ -1,3 +1,5 @@
 nimblephysics == 0.8.93
 matplotlib
 pandas
+
+#conda install -c opensim_admin opensim=4.4=py39np121

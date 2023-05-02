@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'karate_dataset'
+dataset = 'totalcapture'
 
 def strip(y):
     return y.replace(" ", "")
@@ -2578,3 +2578,72 @@ elif dataset == 'hamner2013':
                 path_generic_trc = os.path.join(path_original_subject, file, 'markers.trc')
                 path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
                 shutil.copy2(path_generic_trc, path_generic_trc_end)
+
+elif dataset == 'totalcapture':
+    
+    infoSubjects = {'s1': {'sex': 'male',
+                           'model': 'normal'},
+                    's2': {'sex': 'female',
+                           'model': 'normal'},
+                    's3': {'sex': 'male',
+                           'model': 'exclude'},
+                    's4': {'sex': 'male',
+                           'model': 'exclude'},
+                    's5': {'sex': 'male',
+                           'model': 'exclude'}}
+    
+    path_original_dataset = 'C:/MyDriveSym/Projects/TomVW_IMU/TotalCapture/trc'
+    # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
+    path_clean_dataset = os.path.join(path_data, dataset)
+    os.makedirs(path_clean_dataset, exist_ok=True)    
+    
+    # Loop over subjects
+    for subject in os.listdir(path_original_dataset):
+        if os.path.isdir(os.path.join(path_original_dataset, subject)):            
+            if infoSubjects[subject]['model'] == 'exclude':
+                print('Exclude subject {}'.format(subject))
+                continue
+            
+            # Create new subject folder
+            path_subject = os.path.join(path_clean_dataset, subject)
+            os.makedirs(path_subject, exist_ok=True)
+    
+            # Copy generic model
+            if infoSubjects[subject]['model'] == 'normal':
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+            else:
+                raise ValueError("not existing")
+            path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
+            shutil.copy2(path_generic_model, path_generic_model_end)
+            
+            # Dump generic demographics
+            outfile = os.path.join(path_subject, '_subject.json')
+            subject_data = {'sex': infoSubjects[subject]['sex'],
+                            'skeletonPreset': 'custom'}
+            with open(outfile, "w") as outfile:
+                json.dump(subject_data, outfile)
+                
+            # Re-organize marker data            
+            path_original_subject = os.path.join(path_original_dataset, subject)
+            path_trials = os.path.join(path_subject, 'trials')            
+            
+            os.makedirs(path_trials, exist_ok=True)
+            counttt = 0
+            for file in os.listdir(path_original_subject):
+
+                if not file.endswith('.trc'):
+                    continue
+
+                if counttt > 0:
+                    continue
+                
+                fileName = file[:-4]
+                
+                path_trial = os.path.join(path_trials, fileName)
+                os.makedirs(path_trial, exist_ok=True)
+                
+                path_generic_trc = os.path.join(path_original_subject, file)
+                path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
+                shutil.copy2(path_generic_trc, path_generic_trc_end)
+
+                counttt += 1 
