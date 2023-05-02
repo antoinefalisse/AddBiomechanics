@@ -211,6 +211,7 @@ elif dataset == 'totalcapture':
         else:
             subjects_nonProcessed.append(subject)
             
+    subjects_nonProcessed = ['s1', 's3']
     for subject in subjects_nonProcessed:
         print("Processing {}".format(subject))
         pathSubject = os.path.join(path_dataset, subject)
