@@ -2586,11 +2586,11 @@ elif dataset == 'totalcapture':
                     's2': {'sex': 'female',
                            'model': 'normal'},
                     's3': {'sex': 'male',
-                           'model': 'exclude'},
+                           'model': 'normal'},
                     's4': {'sex': 'male',
-                           'model': 'exclude'},
+                           'model': 'normal'},
                     's5': {'sex': 'male',
-                           'model': 'exclude'}}
+                           'model': 'normal'}}
     
     path_original_dataset = 'C:/MyDriveSym/Projects/TomVW_IMU/TotalCapture/trc'
     # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
@@ -2609,7 +2609,9 @@ elif dataset == 'totalcapture':
             os.makedirs(path_subject, exist_ok=True)
     
             # Copy generic model
-            if infoSubjects[subject]['model'] == 'normal':
+            if subject == 's4':
+                path_generic_model = os.path.join(path_original_dataset, 'model_markers_s4.osim')
+            elif infoSubjects[subject]['model'] == 'normal':
                 path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
             else:
                 raise ValueError("not existing")
@@ -2634,8 +2636,8 @@ elif dataset == 'totalcapture':
                 if not file.endswith('.trc'):
                     continue
 
-                if counttt > 0:
-                    continue
+                # if counttt > 0:
+                #     continue
                 
                 fileName = file[:-4]
                 
