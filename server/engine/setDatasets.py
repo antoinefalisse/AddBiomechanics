@@ -2654,15 +2654,15 @@ elif dataset == 'hamner2013':
 elif dataset == 'totalcapture_2':
     
     infoSubjects = {'s1': {'sex': 'male',
-                           'model': 'exclude'},
+                           'model': 'normal'},
                     's2': {'sex': 'female',
-                           'model': 'normal'},
+                           'model': 'exclude'},
                     's3': {'sex': 'male',
-                           'model': 'normal'},
+                           'model': 'exclude'},
                     's4': {'sex': 'male',
-                           'model': 'normal'},
+                           'model': 'exclude'},
                     's5': {'sex': 'male',
-                           'model': 'normal'}}
+                           'model': 'exclude'}}
     
     path_original_dataset = 'C:/MyDriveSym/Projects/TomVW_IMU/TotalCapture/trc'
     # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
@@ -2700,6 +2700,8 @@ elif dataset == 'totalcapture_2':
                 # Copy generic model
                 if subject == 's4':
                     path_generic_model = os.path.join(path_original_dataset, 'model_markers_s4.osim')
+                if subject == 's1' and 'rom' in fileName.lower():
+                    path_generic_model = os.path.join(path_original_dataset, 'model_markers_noSTRN.osim')
                 elif infoSubjects[subject]['model'] == 'normal':
                     path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
                 else:

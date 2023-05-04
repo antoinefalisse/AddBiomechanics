@@ -196,7 +196,9 @@ elif dataset == 'totalcapture_2':
     path_dataset = os.path.join(path_data, dataset)
     subjects = []
     for file in os.listdir(path_dataset):
-        if ('s' in file):
+        # if ('s' in file and not 's1_acting1' in file):
+        #     subjects.append(file)
+        if ('s1_acting1' in file):
             subjects.append(file)
     
     print(subjects)
