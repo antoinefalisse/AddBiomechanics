@@ -1,5 +1,6 @@
 import os
 import dataman
+import numpy as np
 
 path_main = os.getcwd()
 path_server = os.path.dirname(path_main)
@@ -15,6 +16,13 @@ if dataset == 'totalcapture_2':
         if ('s1_acting1' in file):
             pathStatic = os.path.join(path_dataset, file, 'trials', 'static', 'markers.trc')
             trc_file = dataman.TRCFile(pathStatic)
+            
+            
+            top_head = np.max(trc_file.marker('ARIEL')[:,1])
+            left_toe = np.min(trc_file.marker('LTOE')[:,1])
+            right_toe = np.min(trc_file.marker('RTOE')[:,1])
+            toe = np.min([left_toe,right_toe]) - 
+            
 
 
 
