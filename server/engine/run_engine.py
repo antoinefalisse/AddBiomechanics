@@ -5,7 +5,7 @@ path_main = os.getcwd()
 path_server = os.path.dirname(path_main)
 path_data = os.path.join(path_server, 'data')
 
-dataset = 'totalcapture'
+dataset = 'totalcapture_2'
     
 if dataset == 'opencap_dataset':
 
@@ -191,7 +191,7 @@ elif dataset == 'karate_dataset':
         
     test=1
 
-elif dataset == 'totalcapture':
+elif dataset == 'totalcapture_2':
 
     path_dataset = os.path.join(path_data, dataset)
     subjects = []
@@ -211,7 +211,7 @@ elif dataset == 'totalcapture':
         else:
             subjects_nonProcessed.append(subject)
             
-    subjects_nonProcessed = ['s1', 's3']
+    subjects_nonProcessed = ['s1_acting1']
     for subject in subjects_nonProcessed:
         print("Processing {}".format(subject))
         pathSubject = os.path.join(path_dataset, subject)
