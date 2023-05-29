@@ -15,7 +15,7 @@ subject_data = {'massKg': 68,
                 'skeletonPreset': 'custom'}
 
 # Pick dataset
-dataset = 'totalcapture_2'
+dataset = 'totalcapture_openpose_v0.45'
 
 def strip(y):
     return y.replace(" ", "")
@@ -2748,50 +2748,140 @@ elif dataset == 'totalcapture_2':
 
                 counttt += 1
 
-elif dataset == 'totalcapture_3':
+elif dataset == 'totalcapture_openpose_v0.45':
+
+    pose_detector = 'openpose'
+    augmenter_model = 'v0.45' 
     
-    infoSubjects = {'subject01': {'massKg': 72.8,
-                             'heightM': 1.77,
-                             'sex': 'male',
-                             'model': 'normal'},
-                    'subject02': {'massKg': 76.5,
-                             'heightM': 1.82,
-                             'sex': 'male',
-                             'model': 'normal'},
-                    'subject03': {'massKg': 64.0,
-                             'heightM': 1.78,
-                             'sex': 'male',
-                             'model': 'normal'},
-                    'subject04': {'massKg': 80.5,
-                             'heightM': 1.77,
-                             'sex': 'male',
-                             'model': 'normal'},
-                    'subject08': {'massKg': 82.4,
-                             'heightM': 1.79,
-                             'sex': 'male',
-                             'model': 'normal'},
-                    'subject10': {'massKg': 69.3,
-                             'heightM': 1.70,
-                             'sex': 'male',
-                             'model': 'normal'},
-                    'subject11': {'massKg': 69.4,
-                             'heightM': 1.74,
-                             'sex': 'male',
-                             'model': 'normal'},
-                    'subject17': {'massKg': 68.5,
-                             'heightM': 1.68,
-                             'sex': 'male',
-                             'model': 'normal'},
-                    'subject19': {'massKg': 65.1,
-                             'heightM': 1.72,
-                             'sex': 'male',
-                             'model': 'normal'},
-                    'subject20': {'massKg': 67.2,
-                             'heightM': 1.70,
-                             'sex': 'male',
-                             'model': 'normal'}}
+    infoSubjects = {'s0': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'normal'},
+                    's1': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's2': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's3': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's4': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's5': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's6': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's7': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's8': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's9': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's10': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's11': {'sex': 'male',
+                           'heightM': 1.70,
+                           'model': 'exclude'},
+                    's12': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's13': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's14': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's15': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's16': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's17': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's18': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's19': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's20': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's21': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's22': {'sex': 'female',
+                           'heightM': 1.53,
+                           'model': 'exclude'},
+                    's23': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's24': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's25': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's26': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's27': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's28': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's29': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's30': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's31': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's32': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's33': {'sex': 'male',
+                           'heightM': 1.74,
+                           'model': 'exclude'},
+                    's34': {'sex': 'male',
+                           'heightM': 1.73,
+                           'model': 'exclude'},
+                    's35': {'sex': 'male',
+                           'heightM': 1.73,
+                           'model': 'exclude'},
+                    's36': {'sex': 'male',
+                           'heightM': 1.73,
+                           'model': 'exclude'},
+                    's37': {'sex': 'male',
+                           'heightM': 1.73,
+                           'model': 'exclude'},
+                    's38': {'sex': 'male',
+                           'heightM': 1.81,
+                           'model': 'exclude'},
+                    's39': {'sex': 'male',
+                           'heightM': 1.81,
+                           'model': 'exclude'},
+                    's40': {'sex': 'male',
+                           'heightM': 1.81,
+                           'model': 'exclude'},
+                    's41': {'sex': 'male',
+                           'heightM': 1.81,
+                           'model': 'exclude'},
+                           }
     
-    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data_opensim/Hamner2013/Formatted_2'
+    path_original_dataset = 'C:/MyDriveSym/Projects/openpose-augmenter/Data/database_marker_augmenter/dataset30/'
     # path_original_dataset = '/home/clarkadmin/Documents/myDatasets_Antoine/nmbl_running'
     path_clean_dataset = os.path.join(path_data, dataset)
     os.makedirs(path_clean_dataset, exist_ok=True)    
@@ -2810,7 +2900,7 @@ elif dataset == 'totalcapture_3':
     
             # Copy generic model
             if infoSubjects[subject]['model'] == 'normal':
-                path_generic_model = os.path.join(path_original_dataset, 'model_markers.osim')
+                path_generic_model = os.path.join(path_original_dataset, 'unscaled_model_4addB_allTrue.osim')
             else:
                 raise ValueError("not existing")
             path_generic_model_end = os.path.join(path_subject, 'unscaled_generic.osim')
@@ -2818,26 +2908,35 @@ elif dataset == 'totalcapture_3':
             
             # Dump generic demographics
             outfile = os.path.join(path_subject, '_subject.json')
-            subject_data = {'massKg': infoSubjects[subject]['massKg'],
-                            'heightM': infoSubjects[subject]['heightM'],
-                            'sex': infoSubjects[subject]['sex'],
-                            'skeletonPreset': 'custom'}
+            subject_data = {
+                # 'massKg': infoSubjects[subject]['massKg'],
+                'heightM': infoSubjects[subject]['heightM'],
+                'sex': infoSubjects[subject]['sex'],
+                'skeletonPreset': 'custom'}
             with open(outfile, "w") as outfile:
                 json.dump(subject_data, outfile)
                 
             # Re-organize marker data            
-            path_original_subject = os.path.join(path_original_dataset, subject, 'trials')
+            path_original_subject = os.path.join(path_original_dataset, subject, 'TRC')
             path_trials = os.path.join(path_subject, 'trials')            
             
             os.makedirs(path_trials, exist_ok=True)
             for file in os.listdir(path_original_subject):
 
-                if not os.path.isdir(os.path.join(path_original_subject, file)):
+                # if os.path.isdir(os.path.join(path_original_subject, file)):
+                #     continue
+
+                if not pose_detector in file:
+                    continue
+
+                if not augmenter_model in file:
                     continue
                 
-                path_trial = os.path.join(path_trials, file)
+                print(file)
+                
+                path_trial = os.path.join(path_trials, file.replace('.trc', ''))
                 os.makedirs(path_trial, exist_ok=True)
                 
-                path_generic_trc = os.path.join(path_original_subject, file, 'markers.trc')
+                path_generic_trc = os.path.join(path_original_subject,  file.replace('.trc', ''))
                 path_generic_trc_end = os.path.join(path_trial, 'markers.trc')
                 shutil.copy2(path_generic_trc, path_generic_trc_end)
