@@ -15,6 +15,15 @@ try {
   }
   console.log(emails.length);
   console.log(emails);
+  let domains = [];
+  for (const email of emails) {
+    const domain = email.split('@')[1];
+    if (!domains.includes(domain)) {
+        domains.push(domain);
+        console.log(domain);
+    }
+  }
+  console.log('Domains: '+domains.length);
   fs.writeFileSync('./emails.txt', text);
 } catch (err) {
   console.error(err);

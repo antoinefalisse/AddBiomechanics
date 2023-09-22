@@ -9,7 +9,8 @@ import {
   Spinner,
   Table,
   OverlayTrigger,
-  Tooltip
+  Tooltip,
+  Form
 } from "react-bootstrap";
 import DropFile from "../../components/DropFile";
 import Dropzone from "react-dropzone";
@@ -19,6 +20,9 @@ import MocapTagModal from "./MocapTagModal";
 import MocapS3Cursor from '../../state/MocapS3Cursor';
 import TagEditor from '../../components/TagEditor';
 import { attachEventProps } from "@aws-amplify/ui-react/lib-esm/react-component-lib/utils";
+import { AnyMessageParams } from "yup/lib/types";
+import { parseLinks } from "../../utils"
+import Select, { SingleValue } from 'react-select';
 
 type ProcessingResultsJSON = {
   autoAvgMax: number;
@@ -39,7 +43,13 @@ type MocapTrialRowViewProps = {
   uploadIK: File | undefined;
   onMultipleManualIK: (files: File[]) => void;
   onMultipleGRF: (files: File[]) => void;
+  segmentedTrial: boolean;
+  onChangeSegmentedTrial: (name:string, type:string) => void;
+  trialRange: number[];
+  onChangeTrialRange: (trialName:string, value:number, pos:number) => void;
 };
+
+
 
 const MocapTrialRowView = observer((props: MocapTrialRowViewProps) => {
   const navigate = useNavigate();
@@ -123,7 +133,7 @@ const MocapTrialRowView = observer((props: MocapTrialRowViewProps) => {
   const tagValues = tagsFile.getAttribute("tagValues", {} as { [key: string]: number });
 
   return (
-    <tr>
+    <tr style={{verticalAlign: "middle"}}>
       <td>
         {nameLink}
       </td>
@@ -149,9 +159,74 @@ const MocapTrialRowView = observer((props: MocapTrialRowViewProps) => {
           }}
         />
       </td>
+      <td>
+        <div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ width: '150px', marginInline: '10px' }}>
+                <Select
+                  placeholder="Trimming"
+                  options={[
+                    { value: 'Automatic', label: 'Automatic' },
+                    { value: 'Manual', label: 'Manual' },
+                    { value: 'None', label: 'None' }
+                  ]}
+                  value={
+                    props.segmentedTrial && props.trialRange.length > 0
+                    ? { value: 'Manual', label: 'Manual' }
+                    : !props.segmentedTrial && props.trialRange.length > 0
+                    ? { value: 'Automatic', label: 'Automatic' }
+                    : { value: 'None', label: 'None' }
+                  }
+                  onChange={(selectedOption) => {
+                    if(selectedOption) {
+                      if (selectedOption.value === 'Automatic')
+                        props.onChangeSegmentedTrial(props.name, 'Automatic')
+                      else if (selectedOption.value === 'Manual')
+                        props.onChangeSegmentedTrial(props.name, 'Manual')
+                      else if (selectedOption.value === 'None')
+                        props.onChangeSegmentedTrial(props.name, 'None')
+                    }
+                  }}
+                />
+              </div>
+
+              <label> Start: </label>
+              <input
+                type="number"
+                id={"startTrialTrimInput" + props.index}
+                disabled={props.cursor.dataIsReadonly() || props.segmentedTrial == false}
+                className={"form-control"}
+                style={{ width: "20%", marginInline: '10px'}}
+                onChange={(e:any) => {
+                  const inputValue = parseFloat(e.target.value);
+                  if (!isNaN(inputValue)) {
+                    props.onChangeTrialRange(props.name, inputValue, 0);
+                  }
+                }}
+                value={props.trialRange.length > 0 ? props.trialRange[0] : ""}
+              />
+
+              <label> End: </label>
+              <input
+                type="number"
+                id={"endtTrialTrimInput" + props.index}
+                disabled={props.cursor.dataIsReadonly() || props.segmentedTrial == false}
+                className={"form-control"}
+                style={{ width: "20%", marginInline: '10px'}}
+                onChange={(e:any) => {
+                  const inputValue = parseFloat(e.target.value);
+                  if (!isNaN(inputValue)) {
+                    props.onChangeTrialRange(props.name, inputValue, 1);
+                  }
+                }}
+                value={props.trialRange.length > 0 ? props.trialRange[1] : ""}
+              />
+            </div>
+        </div>
+      </td>
       {!props.cursor.canEdit() ? null : (
         <td>
-          <ButtonGroup className="d-block mb-2">
+          <ButtonGroup className="d-block">
             <Dropdown>
               <Dropdown.Toggle className="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs">
                 <i className="mdi mdi-dots-horizontal"></i>
@@ -451,11 +526,132 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
   const [uploadFiles, setUploadFiles] = useState({} as { [key: string]: File; });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showViewerHint, setShowViewerHint] = useState(false);
+  const [error, setError] = useState<React.ReactElement | null>(null);
+
+  // List of warnings to dismiss.
+  const [dismissed_warning, setDismissedWarning] = useState<Array<string>>([])
+
+  // Checkbox to show all warnings.
+  const [showAllWarnings, setShowAllWarnings] = useState(false)
+
   const navigate = useNavigate();
+
+  // Handle checkbox change for dismissing warnings.
+  const handleCheckboxChange = (itemId: string) => (event: any) => {
+    const liElement = document.getElementById(itemId);
+    const isChecked = event.target.checked;
+
+    // If checked, add to dismished warnings.
+    if (isChecked) {
+      dismissed_warning.push(itemId);
+      setDismissedWarning((dismissed_warning) => [
+        ...dismissed_warning,
+        itemId,
+      ]);
+      // Upload dismissed warnings json.
+      props.cursor.warningPreferencesJson.setAttribute(itemId, isChecked)
+    }
+    // If unchecked, show.
+    else if (!isChecked) {
+      if (liElement) {
+        dismissed_warning.splice(dismissed_warning.indexOf(itemId), 1);
+        setDismissedWarning((dismissed_warning) =>
+          dismissed_warning.filter((item) => item !== itemId)
+        );
+        // Upload dismissed warnings json.
+        props.cursor.warningPreferencesJson.setAttribute(itemId, isChecked)
+      }
+    }
+  };
+
+  const isHiddenCheckboxWarning = (itemId: string): boolean | undefined => {
+    return dismissed_warning.includes(itemId) && !showAllWarnings;
+  };
+
+  // Checkbox component props.
+  interface CheckBoxWarningDismissProps {
+    // Id of the specific warning.
+    itemId: string;
+    // Label of the warning. It can be a string, or a JSX component.
+    label: JSX.Element | string;
+  }
+
+  // Reusable checkbox component to dismiss warnings.
+  const CheckBoxWarningDismiss = ({ itemId, label }: CheckBoxWarningDismissProps) => (
+    <Form.Group>
+      <Form.Check>
+        <OverlayTrigger
+          placement="right"
+          delay={{ show: 50, hide: 400 }}
+          overlay={(props) => (
+            <Tooltip id="button-tooltip" {...props}>
+              You can click this checkbox to dismiss this warning. To show all of the warnings, go to the bottom of the warning section and click on "Show all warnings".
+            </Tooltip>
+          )}>
+          <Form.Check.Input
+            type="checkbox"
+            checked={dismissed_warning.includes(itemId)}
+            disabled={props.cursor.dataIsReadonly()}
+            onChange={handleCheckboxChange(itemId)}
+          />
+        </OverlayTrigger>
+        <Form.Check.Label
+          style={{ opacity: 1 }}
+        >
+          <div>
+            <span>{label}</span>
+          </div>
+        </Form.Check.Label>
+      </Form.Check>
+    </Form.Group>
+  );
+
+  useEffect(() => {
+    if (props.cursor.hasErrorsFile()) {
+      props.cursor.getErrorsFileText().then((text: string) => {
+        var jsonError = JSON.parse(text);
+        setError(<li>
+          <p>
+            <strong>{jsonError.type} - </strong>
+            {parseLinks(jsonError.message)}
+          </p>
+          <p>
+            {parseLinks(jsonError.original_message)}
+          </p>
+        </li>);
+      });
+    }
+    if (props.cursor.hasWarningsPreferenceFile()) {
+      props.cursor.getWarningsPreferenceFile().then((text: string) => {
+        var jsonWarningPreferences = JSON.parse(text);
+        // Iterate over keys to set default values.
+        Object.keys(jsonWarningPreferences).forEach(function (key) {
+          //if(key === "showAllWarnings")
+          //  setShowAllWarnings(jsonWarningPreferences[key])
+          //else
+          if (jsonWarningPreferences[key])
+            setDismissedWarning((dismissed_warning) => [
+              ...dismissed_warning,
+              key,
+            ]);
+        })
+      });
+    }
+  }, []);
 
   let trialViews: any[] = [];
 
+  // Get trials.
   let trials = props.cursor.getTrials();
+
+  // Read segmentedTrials and trialRanges here, so we only read it once.
+  let segmentedTrials = props.cursor.subjectJson.getAttribute("segmentedTrials", [] as boolean[])
+  let trialRanges = props.cursor.subjectJson.getAttribute("trialRanges", {} as { [key: string]: number[] })
+
+  // If segmentedTrials and trialRanges are empty, initialize to default values.
+  if (segmentedTrials.length == 0)
+    segmentedTrials = Array.from({ length: trials.length }, () => false)
+
   for (let i = 0; i < trials.length; i++) {
     trialViews.push(
       <MocapTrialRowView
@@ -485,6 +681,44 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
           }
           setUploadFiles(updatedUploadFiles);
         }}
+        segmentedTrial={segmentedTrials.includes(trials[i].key)}
+        onChangeSegmentedTrial={(name:string, type:string) => {
+          if (type == 'Manual') {
+            if (!segmentedTrials.includes(name)) {
+              segmentedTrials.push(name)
+            }
+            trialRanges[name] = [0, 0]
+          }else if (type == 'Automatic') {
+            if(segmentedTrials.includes(name)) {
+              const index = segmentedTrials.indexOf(name);
+              segmentedTrials.splice(index, 1);
+            }
+            trialRanges[name] = [0, 0]
+          } else if (type == 'None') {
+            if(segmentedTrials.includes(name)) {
+              const index = segmentedTrials.indexOf(name);
+              segmentedTrials.splice(index, 1);
+            }
+            trialRanges[name] = []
+          }
+          props.cursor.subjectJson.setAttribute("segmentedTrials", segmentedTrials)
+        }}
+        trialRange= {trials[i].key in trialRanges ? trialRanges[trials[i].key] : []}
+        onChangeTrialRange = {(trialName:string, value:number, pos:number) => {
+          if (trialName in trialRanges)
+            trialRanges[trialName][pos] = value
+          else {
+            let arr = []
+            if (pos === 0)
+              arr = [value, value]
+            else
+              arr = [0, value]
+            trialRanges[trialName] = arr
+          }
+
+          props.cursor.subjectJson.setAttribute("trialRanges", trialRanges)
+        }}
+
       />
     );
   }
@@ -568,7 +802,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
   let jointLimitsHits = props.cursor.resultsJson.getAttribute("jointLimitsHits", {});
   let osimMarkers: string[] = props.cursor.resultsJson.getAttribute("osimMarkers", {});
 
-  let status: 'done' | 'processing' | 'could-process' | 'error' | 'waiting' | 'empty' = props.cursor.getSubjectStatus();
+  let status: 'done' | 'processing' | 'could-process' | 'error' | 'waiting' | 'slurm' | 'empty' = props.cursor.getSubjectStatus();
   let statusBadge = null;
   let statusDetails = null;
   if (status === "done") {
@@ -618,6 +852,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
     }
 
     let warningList = [];
+    let numHiddenWarnings = 0;
 
     if (guessedTrackingMarkers == true) {
       let markerText = '<Marker name="RSH">';
@@ -626,27 +861,39 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
       let markerText2 = '  <fixed>true</fixed>';
       let markerText3 = '</Marker>';
 
-      warningList.push(<li key='guessed_tracking'>
-        <p>
-          The optimizer had to guess which of your markers were placed on bony landmarks, and which were not. This is probably because in the unscaled OpenSim model you uploaded, all or most of your markers were listed as <code>&lt;fixed&gt;<b>false</b>&lt;/fixed&gt;</code>, or they were all <code>&lt;fixed&gt;<b>true</b>&lt;/fixed&gt;</code>.
-          You may achieve higher quality results if you specify all the markers placed on <b><i>bony landmarks (i.e. "anatomical markers")</i></b> as <code>&lt;fixed&gt;<b>true</b>&lt;/fixed&gt;</code>, and all the markers placed on <b><i>soft tissue (i.e. "tracking markers")</i></b> as <code>&lt;fixed&gt;<b>false</b>&lt;/fixed&gt;</code>.
-        </p>
-        <p>Here's an example marker that's been correctly specified as <code>&lt;fixed&gt;<b>true</b>&lt;/fixed&gt;</code>:
-        </p>
-        <p>
-          <code>
-            <pre style={{ marginBottom: 0 }}>
-              {markerText}
-            </pre>
-            <b><pre style={{ marginBottom: 0 }}>
-              {markerText2}
-            </pre></b>
-            <pre>
-              {markerText3}
-            </pre>
-          </code>
-        </p>
-      </li>);
+      if (!isHiddenCheckboxWarning('guessed_tracking')) {
+        warningList.push(<li key='guessed_tracking' id={'guessed_tracking'}>
+          <CheckBoxWarningDismiss
+            itemId="guessed_tracking"
+            label={
+              <>
+                <p>
+                  The optimizer had to guess which of your markers were placed on bony landmarks, and which were not. This is probably because in the unscaled OpenSim model you uploaded, all or most of your markers were listed as <code>&lt;fixed&gt;<b>false</b>&lt;/fixed&gt;</code>, or they were all <code>&lt;fixed&gt;<b>true</b>&lt;/fixed&gt;</code>.
+                  You may achieve higher quality results if you specify all the markers placed on <b><i>bony landmarks (i.e. "anatomical markers")</i></b> as <code>&lt;fixed&gt;<b>true</b>&lt;/fixed&gt;</code>, and all the markers placed on <b><i>soft tissue (i.e. "tracking markers")</i></b> as <code>&lt;fixed&gt;<b>false</b>&lt;/fixed&gt;</code>.
+                </p>
+                <p>Here's an example marker that's been correctly specified as <code>&lt;fixed&gt;<b>true</b>&lt;/fixed&gt;</code>:
+                </p>
+                <p>
+                  <code>
+                    <pre style={{ marginBottom: 0 }}>
+                      {markerText}
+                    </pre>
+                    <b><pre style={{ marginBottom: 0 }}>
+                      {markerText2}
+                    </pre></b>
+                    <pre>
+                      {markerText3}
+                    </pre>
+                  </code>
+                </p>
+              </>
+            }
+          />
+        </li>);
+      }
+      else {
+        numHiddenWarnings++;
+      }
     }
 
     if (trialMarkerSets != null) {
@@ -671,11 +918,18 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
           }
         }
       }
-
       if (trialOnly.length > 0) {
-        warningList.push(<li key={'unused-markers'}>
-          <p>There were <b><i>{trialOnly.length} markers</i></b> in the mocap file(s) that were ignored by the optimizer, because they weren't in the unscaled OpenSim model you uploaded: <b><i>{trialOnly.join(', ')}</i></b>. These appear as "Unused Markers" in the visualizer - you can mouse over them to see which one is which.</p>
-        </li>);
+        if (!isHiddenCheckboxWarning('unused-markers')) {
+          warningList.push(<li key={'unused-markers'} id={'unused-markers'}>
+            <CheckBoxWarningDismiss
+              itemId="unused-markers"
+              label={<p>There were <b><i>{trialOnly.length} markers</i></b> in the mocap file(s) that were ignored by the optimizer, because they weren't in the unscaled OpenSim model you uploaded: <b><i>{trialOnly.join(', ')}</i></b>. These appear as "Unused Markers" in the visualizer - you can mouse over them to see which one is which.</p>}
+            />
+          </li>);
+        }
+        else {
+          numHiddenWarnings++;
+        }
       }
     }
     if (Object.keys(trialWarnings).length > 0) {
@@ -692,14 +946,30 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
         </p>)
       }
       */
-      warningList.push(<li key={"markerCleanupWarnings"}>
-        <p>There were some glitches / mislabelings detected in the uploaded marker data. We've attempted to patch it with heuristics, but you may want to review by hand. See the README in the downloaded results folder for details.</p>
-      </li>);
+      if (!isHiddenCheckboxWarning('markerCleanupWarnings')) {
+        warningList.push(<li key={"markerCleanupWarnings"} id={"markerCleanupWarnings"}>
+          <CheckBoxWarningDismiss
+            itemId="markerCleanupWarnings"
+            label={<p>There were some glitches / mislabelings detected in the uploaded marker data. We've attempted to patch it with heuristics, but you may want to review by hand. See the README in the downloaded results folder for details.</p>}
+          />
+        </li>);
+      }
+      else {
+        numHiddenWarnings++;
+      }
     }
     if (fewFramesWarning) {
-      warningList.push(<li key={"fewFrames"}>
-        <p>The trials you uploaded didn't include very many frames! The optimizer relies on motion of the body to find optimal scalings, so you will get better results with more data from this subject.</p>
-      </li>);
+      if (!isHiddenCheckboxWarning('fewFrames')) {
+        warningList.push(<li key={"fewFrames"} id={"fewFrames"}>
+          <CheckBoxWarningDismiss
+            itemId="fewFrames"
+            label={<p>The trials you uploaded didn't include very many frames! The optimizer relies on motion of the body to find optimal scalings, so you will get better results with more data from this subject.</p>}
+          />
+        </li>);
+      }
+      else {
+        numHiddenWarnings++;
+      }
     }
     if (Object.keys(jointLimitsHits).length > 0) {
       let warningsBlocks = [];
@@ -722,29 +992,81 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
           </li>);
         }
       }
-      warningList.push(<li key={"fewFrames"}>
-        <p>The OpenSim skeleton hit its joint limits during the trial. This may lead to poor/jittery IK results. Here are joints to investigate:</p>
-        <ul>
-          {warningsBlocks}
-        </ul>
-      </li>);
+      if (!isHiddenCheckboxWarning('jointLimits')) {
+        warningList.push(<li key={"jointLimits"} id={"jointLimits"} style={{ verticalAlign: "text-top" }}>
+          <CheckBoxWarningDismiss
+            itemId="jointLimits"
+            label={<>
+              <p>The OpenSim skeleton hit its joint limits during the trial. This may lead to poor/jittery IK results. Here are joints to investigate:</p>
+              <ul>
+                {warningsBlocks}
+              </ul>
+            </>
+            }
+          />
+        </li>);
+      }
+      else {
+        numHiddenWarnings++;
+      }
     }
 
+    let showAllWarningsDiv = null;
+    if (numHiddenWarnings > 0 || showAllWarnings) {
+      showAllWarningsDiv = (
+        <OverlayTrigger
+          placement="right"
+          delay={{ show: 50, hide: 400 }}
+          overlay={(props) => (
+            <Tooltip id="button-tooltip" {...props}>
+              Click this checkbox to show/hide dismissed warnings.
+            </Tooltip>
+          )}>
+          <Form.Check
+            type="checkbox"
+            label="This subject has warnings that were dismissed. Check to show/hide them."
+            checked={showAllWarnings}
+            onChange={(event) => {
+              setShowAllWarnings(!showAllWarnings)
+              // If checked, show dismissed warning..
+              if (event.target.checked) {
+                dismissed_warning.forEach((dismissed_warning_id) => {
+                  const liElement = document.getElementById(dismissed_warning_id);
+                })
+                // If unchecked, hide dismissed warning.
+              } else {
+                dismissed_warning.forEach((dismissed_warning_id) => {
+                  const liElement = document.getElementById(dismissed_warning_id);
+                })
+              }
+              // Save preferences in json file.
+              props.cursor.warningPreferencesJson.setAttribute("showAllWarnings", event.target.checked)
+            }}
+          />
+        </OverlayTrigger>
+      )
+    }
     let guessedMarkersWarning = null;
     if (warningList.length > 0) {
       guessedMarkersWarning = <div className="alert alert-warning">
         <h4><i className="mdi mdi-alert me-2 vertical-middle"></i> Warning: Results may be suboptimal!</h4>
         <p>
-          The optimizer detected some issues in the uploaded files. We can't detect everything automatically, so see our <a href="https://addbiomechanics.org/instructions.html" target="_blank">Tips and Tricks page</a> for more suggestions.
+          The optimizer detected some issues in the uploaded files. We can't detect everything automatically, so see our <a href="https://addbiomechanics.org/data.html" target="_blank">Tips and Tricks page</a> for more suggestions.
         </p>
         <hr />
-        <ul>
+        <ul style={{ listStyleType: 'none', paddingLeft: '1.5em' }}>
           {warningList}
         </ul>
         <hr />
         <p>
           You can ignore these warnings if you are happy with your results, or you update your data and/or your OpenSim Model and Markerset and then hit "Reprocess" (below in yellow) to fix the problem.
         </p>
+        {showAllWarningsDiv}
+      </div>;
+    }
+    else {
+      guessedMarkersWarning = <div className="alert alert-warning">
+        {showAllWarningsDiv}
       </div>;
     }
 
@@ -795,8 +1117,39 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
     </>;
   }
   else if (status === "error") {
+    // var text = '{"type": "PathError", "message": "PathError: This is a custom message. Below is the original error message, which may contain useful information about your issue. If you are unable to resolve the issue, please, submit a forum post at https://simtk.org/projects/addbiomechanics or submit a GitHub issue at https://github.com/keenon/AddBiomechanics/issues with all error message included.", "original_message": "Exception caught in validate_paths: This is a test exception."}'
+    // var jsonError = JSON.parse(text);
+    // error = <li>
+    //           <p>
+    //             <strong>{jsonError.type} - </strong>
+    //             {parseLinks(jsonError.message)}
+    //           </p>
+    //           <p>
+    //             {parseLinks(jsonError.original_message)}
+    //           </p>
+    //         </li>
+
+    let guessedErrors = null;
+    if (error != null) {
+      guessedErrors = <div className="alert alert-danger">
+        <h4><i className="mdi mdi-alert me-2 vertical-middle"></i>  Detected errors while processing the data!</h4>
+        <p>
+          There were some errors while processing the data. See our <a href="https://addbiomechanics.org/data.html" target="_blank">Tips and Tricks page</a> for more suggestions.
+        </p>
+        <hr />
+        <ul>
+          {error}
+        </ul>
+        <hr />
+        <p>
+          Please, fix the errors and update your data and/or your OpenSim Model and Markerset and then hit "Reprocess" (below in yellow) to fix the problem.
+        </p>
+      </div>;
+    }
+
     statusBadge = <span className="badge bg-danger">Error</span>;
     statusDetails = <>
+      {guessedErrors}
       <Button variant="warning" onClick={props.cursor.requestReprocessSubject}>
         <i className="mdi mdi-refresh me-2 vertical-middle"></i>
         Reprocess
@@ -875,6 +1228,27 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
       We'll send you an email when your data has finished processing!
     </div>
   }
+  else if (status === "slurm") {
+    statusBadge = <span className="badge bg-secondary">Queued on SLURM cluster</span>;
+    statusDetails = <div>
+      <div>
+        We'll send you an email when your data has finished processing!
+      </div>
+      <Dropdown>
+        <Dropdown.Toggle size="sm" variant="light" id="dropdown-basic">
+          Advanced Options
+        </Dropdown.Toggle>
+
+        <Dropdown.Menu>
+          <Dropdown.Item variant="danger" onClick={() => {
+            if (window.confirm("DANGER! Only do this if your processing server has crashed. Are you fairly confident your processing server crashed?")) {
+              props.cursor.requestReprocessSubject();
+            }
+          }}>DANGER: Reprocess now, ignoring current processing attempt</Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
+    </div>
+  }
   else if (status === 'empty') {
     statusBadge = <span className="badge bg-danger">Missing required data</span>;
     statusDetails = <div>
@@ -889,6 +1263,8 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
   let disableDynamics = props.cursor.subjectJson.getAttribute("disableDynamics", false);
   let residualsToZero = props.cursor.subjectJson.getAttribute("residualsToZero", false);
   let tuneResidualLoss = props.cursor.subjectJson.getAttribute("tuneResidualLoss", 1.0);
+  let runMoco = props.cursor.subjectJson.getAttribute("runMoco", false);
+  let exportMoco = props.cursor.subjectJson.getAttribute("exportMoco", false);
 
   let openSimText = props.cursor.customModelFile.getText();
   console.log("OpenSim text: " + openSimText);
@@ -921,6 +1297,28 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
           </p>
           <input type="checkbox" checked={residualsToZero} onChange={(e) => {
             props.cursor.subjectJson.setAttribute("residualsToZero", e.target.checked);
+          }}></input>
+        </div>
+        <div className="mb-15">
+          <p>
+            Run a Moco Inverse problem to get muscle forces, after the dynamics optimization is complete:{" "}
+          </p>
+          <input type="checkbox" checked={runMoco} onChange={(e) => {
+            props.cursor.subjectJson.setAttribute("runMoco", e.target.checked);
+          }}></input>
+        </div>
+        <div className="mb-15">
+          <p>
+            Export a Python script to allow you to run a local Moco Inverse problem to get muscle forces, using the results of the dynamics optimization:{" "}
+          </p>
+          <input type="checkbox" checked={exportMoco || runMoco} onChange={(e) => {
+            if (e.target.checked) {
+              props.cursor.subjectJson.setAttribute("exportMoco", true);
+            }
+            else {
+              props.cursor.subjectJson.setAttribute("exportMoco", false);
+              props.cursor.subjectJson.setAttribute("runMoco", false);
+            }
           }}></input>
         </div>
       </>;
@@ -1285,6 +1683,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
   const nameWidth = 120;
   const fileWidthPart1 = 100;
   const fileWidthPart2 = 100;
+  const dataTrimmingWidth = 450;
   const actionWidth = props.cursor.canEdit() ? 100 : 0;
 
   const remainingWidth = '100%'; // 'calc(100% - ' + (nameWidth + fileWidthPart1 + fileWidthPart2 + actionWidth) + 'px)';
@@ -1316,6 +1715,7 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
             <col width={fileWidthPart2 + 'px'} />
             {showValidationControls ? <col width={((100 - 20 - (props.cursor.canEdit() ? 15 : 0)) / 4) + "%"} /> : null}
             <col width={remainingWidth} />
+            <col width={dataTrimmingWidth + 'px'} />
             {props.cursor.canEdit() ? (
               <col width={actionWidth} />
             ) : null}
@@ -1366,6 +1766,25 @@ const MocapSubjectView = observer((props: MocapSubjectViewProps) => {
                   <i className="mdi mdi-help-circle-outline text-muted vertical-middle" style={{ marginLeft: '5px' }}></i>
                 </OverlayTrigger>
               </th>
+
+              <th className="border-0">
+                Data Trimming
+                <OverlayTrigger
+                  placement="right"
+                  delay={{ show: 50, hide: 400 }}
+                  overlay={(props) => (
+                    <Tooltip id="button-tooltip" {...props}>
+                      There are three methods for data trimming: <br></br>
+                       - <b>Automatic:</b> We use internal heuristics to infer data trimming points. When the processing is finished, the inferred trimming values will be shown.<br></br>
+                       - <b>Manual:</b> You can manually set data trimming points. <br></br>
+                       - <b>None:</b> No trimming. <br></br>
+                      You can select data trimming method in the actions menu at right.
+                    </Tooltip>
+                  )}
+                >
+                  <i className="mdi mdi-help-circle-outline text-muted vertical-middle" style={{ marginLeft: '5px' }}></i>
+                </OverlayTrigger>
+                </th>
               {props.cursor.canEdit() ? (
                 <th className="border-0">
                   Action

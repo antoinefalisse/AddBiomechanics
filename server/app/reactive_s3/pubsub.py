@@ -7,17 +7,21 @@ from uuid import uuid4
 import json
 from typing import Callable, Any, Dict
 import datetime
+import os
+import queue
 
 received_count = 0
+
+CERT_HOME = os.getenv("CERT_HOME", "/root/certs")
 
 # AWS IoT supports 443 and 8883
 PORT = 443
 # File path to your client certificate, in PEM format
-CERT = "/root/certs/device.pem.crt"
+CERT = CERT_HOME+"/device.pem.crt"
 # File path to your private key, in PEM format
-KEY = "/root/certs/private.pem.key"
+KEY = CERT_HOME+"/private.pem.key"
 # File path to root certificate authority, in PEM format.
-ROOT_CA = "/root/certs/Amazon-root-CA-1.pem"
+ROOT_CA = CERT_HOME+"/Amazon-root-CA-1.pem"
 # Your AWS IoT custom endpoint, not including a port.
 ENDPOINT = "adup0ijwoz88i-ats.iot.us-west-2.amazonaws.com"
 # Client ID for MQTT connection.
@@ -39,6 +43,17 @@ class PubSub:
         print('creating PubSub object')
         self.deployment = deployment
         self.lock = threading.Lock()
+
+        self.connect_mqtt()
+
+        # Create a queue for messages
+        self.message_queue = queue.Queue()
+
+        # Create a worker thread for sending messages
+        self.worker_thread = threading.Thread(target=self._message_sender, daemon=True)
+        self.worker_thread.start()
+
+    def connect_mqtt(self):
         # Spin up resources
         eventLoopGroup = io.EventLoopGroup(1)
         hostResolver = io.DefaultHostResolver(eventLoopGroup)
@@ -59,49 +74,82 @@ class PubSub:
             http_proxy_options=None)
 
         print("Connecting to {} with client ID '{}'...".format(ENDPOINT, CLIENT_ID))
-
         connectFuture = self.mqttConnection.connect()
+        print('Waiting for connection...')
         # Future.result() waits until a result is available
         connectFuture.result()
+        print('Connected to PubSub')
+
+    def _message_sender(self):
+        while True:
+            topic, payload = self.message_queue.get()
+            if self.mqttConnection:
+                self.lock.acquire()
+                try:
+                    payloadWithTopic = payload.copy()
+                    payloadWithTopic['topic'] = topic
+                    payload_json = json.dumps(payloadWithTopic)
+                    full_topic = '/' + self.deployment + topic
+                    if len(full_topic) > 100:
+                        print('Topic too long, not sending: ' + full_topic)
+                        self.message_queue.task_done()
+                        continue
+                    sendFuture, packetId = self.mqttConnection.publish(
+                        topic=('/' + self.deployment + topic),
+                        payload=payload_json,
+                        qos=mqtt.QoS.AT_MOST_ONCE)  # AT_LEAST_ONCE
+                    # Future.result() waits until a result is available
+                    sendFuture.result(timeout=5.0)
+                    # Mark the task as done in the queue
+                    self.message_queue.task_done()
+                    # Rate limit the sending of messages on the PubSub queue to 20 per second
+                    time.sleep(0.05)
+                except Exception as e:
+                    print('PubSub got an error sending message to topic: ' + topic)
+                    print(e)
+                    print('Will try again in 5 seconds...')
+                    time.sleep(5)
+                finally:
+                    self.lock.release()
+            else:
+                print('PubSub is not connected, cannot send message to topic: ' + topic+', with queue len: ' +
+                      str(self.message_queue.qsize()))
+                print('Will try again in 5 seconds...')
+                time.sleep(5)
 
     def subscribe(self, topic: str, callback: Callable[[str, Any], None]):
         """
         Subscribe to a topic
         """
         self.lock.acquire()
-        subscribeFuture, packetId = self.mqttConnection.subscribe(
-            topic=('/' + self.deployment + topic),
-            qos=mqtt.QoS.AT_MOST_ONCE,  # AT_LEAST_ONCE
-            callback=callback)
-        # Future.result() waits until a result is available
-        subscribeFuture.result()
-        self.lock.release()
+        try:
+            subscribeFuture, packetId = self.mqttConnection.subscribe(
+                topic=('/' + self.deployment + topic),
+                qos=mqtt.QoS.AT_MOST_ONCE,  # AT_LEAST_ONCE
+                callback=callback)
+            # Future.result() waits until a result is available
+            subscribeFuture.result()
+        finally:
+            self.lock.release()
 
     def sendMessage(self, topic: str, payload: Dict[str, Any] = {}):
         """
-        Sends a message to PubSub
+        Adds a message to the queue to be sent
         """
-        self.lock.acquire()
-        payloadWithTopic = payload.copy()
-        payloadWithTopic['topic'] = topic
-        payload_json = json.dumps(payloadWithTopic)
-        sendFuture, packetId = self.mqttConnection.publish(
-            topic=('/' + self.deployment + topic),
-            payload=payload_json,
-            qos=mqtt.QoS.AT_MOST_ONCE)  # AT_LEAST_ONCE
-        # Future.result() waits until a result is available
-        sendFuture.result()
-        self.lock.release()
+        self.message_queue.put((topic, payload))
 
     def disconnect(self):
+        print('Disconnecting PubSub...')
         self.lock.acquire()
-        """
-        Disconnect the PubSub pipe
-        """
-        disconnect_future = self.mqtt_connection.disconnect()
-        # Wait for the async op to complete
-        disconnect_future.result()
-        self.lock.release()
+        try:
+            """
+            Disconnect the PubSub pipe
+            """
+            disconnect_future = self.mqttConnection.disconnect()
+            # Wait for the async op to complete
+            disconnect_future.result()
+        finally:
+            self.lock.release()
 
     def addResumeListener(self, listener):
         self.resumeListeners.append(listener)
@@ -112,6 +160,10 @@ class PubSub:
         """
         print("Connection interrupted at {}. error: {}".format(
             datetime.datetime.now().strftime("%H:%M:%S"), error))
+        self.mqttConnection = None
+        print('Sleeping for 5 seconds, then attempting to recreate the connection')
+        time.sleep(5)
+        self.connect_mqtt()
 
     def _onConnectionResumed(self, connection, returnCode=None, sessionPresent=None, **kwargs):
         """
@@ -120,7 +172,7 @@ class PubSub:
         print("Connection resumed at {}. connection: {} return_code: {} session_present: {}".format(datetime.datetime.now().strftime("%H:%M:%S"),
                                                                                                     connection, returnCode, sessionPresent))
 
-        self.mqtt_connection = connection
+        self.mqttConnection = connection
 
         if returnCode == mqtt.ConnectReturnCode.ACCEPTED and not sessionPresent:
             print("Session did not persist. Resubscribing to existing topics...")

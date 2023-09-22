@@ -11,6 +11,7 @@ import shutil
 import boto3
 import threading
 import argparse
+from typing import Tuple
 
 
 def absPath(path: str):
@@ -121,6 +122,7 @@ class SubjectToProcess:
     readyFlagFile: str
     processingFlagFile: str
     resultsFile: str
+    errorsFile: str
     logfile: str
 
     # Trial objects
@@ -149,9 +151,12 @@ class SubjectToProcess:
 
         # Trial files
         self.readyFlagFile = self.subjectPath + 'READY_TO_PROCESS'
+        self.dynamicsFlagFile = self.subjectPath + 'DYNAMICS'
+        self.queuedOnSlurmFlagFile = self.subjectPath + 'SLURM'
         self.processingFlagFile = self.subjectPath + 'PROCESSING'
         self.errorFlagFile = self.subjectPath + 'ERROR'
         self.resultsFile = self.subjectPath + '_results.json'
+        self.errorsFile = self.subjectPath + '_errors.json'
         self.osimResults = self.subjectPath + self.subjectName + '.zip'
         self.pytorchResults = self.subjectPath + self.subjectName + '.bin'
         self.logfile = self.subjectPath + 'log.txt'
@@ -200,6 +205,18 @@ class SubjectToProcess:
             return 'https://dev.addbiomechanics.org/data/'+userId+'/'+filePath
         else:
             return 'https://app.addbiomechanics.org/data/'+userId+'/'+filePath
+
+    def markAsQueuedOnSlurm(self):
+        """
+        This marks a subject as having been queued for processing on a slurm cluster
+        """
+        self.index.uploadText(self.queuedOnSlurmFlagFile, '')
+
+    def markAsNotQueuedOnSlurm(self):
+        """
+        This un-marks a subject that was previously queued on the slurm cluster, because something went wrong
+        """
+        self.index.delete(self.queuedOnSlurmFlagFile)
 
     def process(self):
         """
@@ -272,7 +289,8 @@ class SubjectToProcess:
                                     self.index.pubSub.sendMessage(
                                         '/LOG/'+procLogTopic, logLine)
                                 except e:
-                                    print('Failed to send live log message: '+str(e), flush=True)
+                                    print(
+                                        'Failed to send live log message: '+str(e), flush=True)
                                 unflushedLines = unflushedLines[20:]
                                 # Explicitly do NOT reset lastFlushed on this branch, because we want to immediately send the next batch of lines, until we've exhausted the queue.
                             else:
@@ -283,7 +301,8 @@ class SubjectToProcess:
                                     self.index.pubSub.sendMessage(
                                         '/LOG/'+procLogTopic, logLine)
                                 except e:
-                                    print('Failed to send live log message: '+str(e), flush=True)
+                                    print(
+                                        'Failed to send live log message: '+str(e), flush=True)
                                 unflushedLines = []
                                 # Reset lastFlushed, because we've sent everything, and we want to wait 3 seconds before sending again.
                                 lastFlushed = now
@@ -305,7 +324,8 @@ class SubjectToProcess:
                                 self.index.pubSub.sendMessage(
                                     '/LOG/'+procLogTopic, logLine)
                             except e:
-                                print('Failed to send live log message: '+str(e), flush=True)
+                                print('Failed to send live log message: ' +
+                                      str(e), flush=True)
                     line = 'exit: '+str(exitCode)
                     # Send to the log
                     logFile.write(line.encode("utf-8"))
@@ -317,7 +337,8 @@ class SubjectToProcess:
                         self.index.pubSub.sendMessage(
                             '/LOG/'+procLogTopic, logLine)
                     except e:
-                        print('Failed to send live log message: '+str(e), flush=True)
+                        print('Failed to send live log message: ' +
+                              str(e), flush=True)
                     print('Process return code: '+str(exitCode), flush=True)
 
             # 5. Upload the results back to S3
@@ -341,11 +362,19 @@ class SubjectToProcess:
                 if os.path.exists(path + self.subjectName + '.bin'):
                     self.index.uploadFile(
                         self.pytorchResults, path + self.subjectName + '.bin')
+
                 # 5.2. Upload the _results.json file last, since that marks the trial as DONE on the frontend,
                 # and it starts to be able
                 if os.path.exists(path + '_results.json'):
                     self.index.uploadFile(
                         self.resultsFile, path + '_results.json')
+                    # Load the results file, and look for the 'linearResidual' field to indicate that there was dynamics
+                    # in the model. If there was, then we need to upload a DYNAMICS flag to the frontend to make it
+                    # easier to sort datasets by whether they have dynamics or not.
+                    with open(path + '_results.json') as results:
+                        resultsJson = json.loads(results.read())
+                        if 'linearResidual' in resultsJson:
+                            self.index.uploadText(self.dynamicsFlagFile, '')
                 else:
                     print('WARNING! FILE NOT UPLOADED BECAUSE FILE NOT FOUND! ' +
                           path + '_results.json', flush=True)
@@ -354,23 +383,31 @@ class SubjectToProcess:
                     subjectJson = json.loads(subj.read())
                     if 'email' in subjectJson:
                         email = subjectJson['email']
-                        print('sending notification email to '+str(email))
-                        print('subject path: '+str(self.subjectPath))
-                        parts = self.subjectPath.split('/')
-                        print('path parts: '+str(parts))
-                        name = parts[-1]
-                        if parts[-1] == '':
-                            name = parts[-2]
-                        print('name: '+str(name))
-                        emailPath = '/'.join(parts[3:-1]
-                                             if parts[-1] == '' else parts[3:])
-                        print('email path: '+str(emailPath))
-                        emailPath = emailPath.replace(' ', '%20')
-                        self.sendNotificationEmail(email, name, emailPath)
+                        if self.subjectPath.startswith('protected/') or self.subjectPath.startswith('private/'):
+                            print('sending notification email to '+str(email))
+                            print('subject path: '+str(self.subjectPath))
+                            parts = self.subjectPath.split('/')
+                            print('path parts: '+str(parts))
+                            name = parts[-1]
+                            if parts[-1] == '':
+                                name = parts[-2]
+                            print('name: '+str(name))
+                            emailPath = '/'.join(parts[3:-1]
+                                                 if parts[-1] == '' else parts[3:])
+                            print('email path: '+str(emailPath))
+                            emailPath = emailPath.replace(' ', '%20')
+                            self.sendNotificationEmail(email, name, emailPath)
+                        else:
+                            print('Not sending notification email because subject path does not start with "protected/"'
+                                  ' or "private/"')
 
                 # 6. Clean up after ourselves
                 shutil.rmtree(path, ignore_errors=True)
             else:
+                if os.path.exists(path + '_errors.json'):
+                    self.index.uploadFile(
+                        self.errorsFile, path + '_errors.json')
+
                 # TODO: We should probably re-upload a copy of the whole setup that led to the error
                 # Let's upload a unique copy of the log to S3, so that we have it in case the user re-processes
                 if os.path.exists(path + 'log.txt'):
@@ -380,6 +417,7 @@ class SubjectToProcess:
                     print('WARNING! FILE NOT UPLOADED BECAUSE FILE NOT FOUND! ' +
                           self.logfile, flush=True)
 
+                # This uploads the ERROR flag
                 self.pushError(exitCode)
             print('Finished processing, returning from process() method.', flush=True)
         except Exception as e:
@@ -391,6 +429,7 @@ class SubjectToProcess:
                 self.index.uploadFile(self.subjectPath +
                                       'log_error_copy_' + str(time.time()) + '.txt', path + 'log.txt')
 
+            # This uploads the ERROR flag
             self.pushError(1)
 
     def pushProcessingFlag(self, procLogTopic: str):
@@ -410,7 +449,7 @@ class SubjectToProcess:
         if not self.readyToProcess() or self.alreadyProcessed():
             return False
         # If nobody else has claimed this, it's a great bet
-        if not self.index.exists(self.processingFlagFile):
+        if not self.index.exists(self.processingFlagFile) and not self.index.exists(self.queuedOnSlurmFlagFile):
             return True
         # If there's already a processing flag, we need to check how old it is. Servers are
         # allowed to crash without finishing processing, so they're supposed to re-up their lock
@@ -483,6 +522,7 @@ class MocapServer:
     queue: List[SubjectToProcess]
     bucket: str
     deployment: str
+    singularity_image_path: str
 
     # Status reporting quantities
     serverId: str
@@ -490,9 +530,10 @@ class MocapServer:
     lastUploadedStatusTimestamp: float
     lastSeenPong: Dict[str, float]
 
-    def __init__(self, bucket: str, deployment: str) -> None:
+    def __init__(self, bucket: str, deployment: str, singularity_image_path: str) -> None:
         self.bucket = bucket
         self.deployment = deployment
+        self.singularity_image_path = singularity_image_path
         self.queue = []
         self.currentlyProcessing = None
 
@@ -533,14 +574,19 @@ class MocapServer:
                     folder += '/'
                 subject = SubjectToProcess(self.index, folder)
                 if subject.shouldProcess():
-                    print('- should process: '+str(subject.subjectPath))
                     shouldProcessSubjects.append(subject)
 
-        # 2. Sort Trials oldest to newest, sort by default sorts in ascending order
-        shouldProcessSubjects.sort(key=lambda x: x.latestInputTimestamp())
+        # 2. Sort Trials. First we prioritize subjects that are not just copies in the "standardized" bucket, then
+        # we sort oldest to newest. The sort method gets passed a Tuple, which goes left to right, True before False,
+        # and low to high.
+        shouldProcessSubjects.sort(key=lambda x: (
+            x.subjectPath.startswith("standardized"), x.latestInputTimestamp()))
 
         # 3. Update the queue. There's another thread that busy-waits on the queue changing, that can then grab a queue entry and continue
         self.queue = shouldProcessSubjects
+
+        for subject in self.queue:
+            print('- should process: ' + str(subject.subjectPath))
 
         # 4. Update status file. Do this on another thread, to avoid deadlocking with the pubsub service when this is being called
         # inside a callback from a message, and then wants to send its own message out about updating the status file.
@@ -619,7 +665,8 @@ class MocapServer:
                     try:
                         self.index.pubSub.sendMessage('/PING/'+k, {})
                     except e:
-                        print('Failed to send ping to '+k+': '+str(e), flush=True)
+                        print('Failed to send ping to ' +
+                              k+': '+str(e), flush=True)
 
             # Check for death
             for k in statusFiles:
@@ -648,6 +695,28 @@ class MocapServer:
             print('Cueing an every ten minutes refresh', flush=True)
             self.index.refreshIndex()
 
+    def getSlurmJobQueueLen(self) -> Tuple[int, int]:
+        """
+        This uses the `squeue` command to check how many jobs we currently have pending in the queue, if we're on the SLURM cluster.
+        """
+        if len(self.singularity_image_path) == 0:
+            return 0, 0
+        # Fetch all jobs for the user
+        try:
+            cmd_all_jobs = f"squeue -u $USER"
+            all_jobs_output = subprocess.check_output(cmd_all_jobs, shell=True)
+            all_jobs_output_str = all_jobs_output.decode(
+                'utf-8')  # decode bytes to string
+            all_lines = all_jobs_output_str.strip().splitlines()
+            new_jobs = len([
+                line for line in all_lines if self.deployment+'_new' in line])
+            reprocessing_jobs = len([
+                line for line in all_lines if self.deployment+'_re' in line])
+            return new_jobs, reprocessing_jobs
+        except Exception as e:
+            print('Failed to get SLURM job queue length: '+str(e))
+            return 0, 0
+
     def processQueueForever(self):
         """
         This busy-waits on the queue updating, and will process the head of the queue one at a time when it becomes available.
@@ -664,9 +733,51 @@ class MocapServer:
                     # If it doesn't, then perhaps something went wrong and it's actually fine to process again. So the key idea is DON'T
                     # MANUALLY MANAGE THE WORK QUEUE! That happens in self.onChange()
 
-                    self.currentlyProcessing.process()
-                    # print("sleeping 10s to simulate that we're processing")
-                    # time.sleep(10)
+                    if len(self.singularity_image_path) > 0:
+                        reprocessing_job: bool = self.currentlyProcessing.subjectPath.startswith('standardized')
+
+                        # SLURM has resource limits, and will fail to queue our job with sbatch if we're too greedy. So we need to check
+                        # the queue length before we queue up a new job, and not queue up more than 15 jobs at a time (though the precise limit
+                        # isn't documented anywhere, I figure 15 concurrent jobs per deployment (so 30 total between dev and prod) is probably a reasonable limit).
+                        slurm_new_jobs, slurm_reprocessing_jobs = self.getSlurmJobQueueLen()
+                        slurm_total_jobs = slurm_new_jobs + slurm_reprocessing_jobs
+                        print('Queueing subject for processing on SLURM: ' +
+                              self.currentlyProcessing.subjectPath)
+                        # We always leave a few slots open for new jobs, since they're more important than reprocessing
+                        if (reprocessing_job and slurm_reprocessing_jobs < 10) or \
+                                (not reprocessing_job and slurm_total_jobs < 15):
+                            # Mark the subject as having been queued in SLURM, so that we don't try to process it again
+                            self.currentlyProcessing.markAsQueuedOnSlurm()
+                            print('Queueing subject for processing on SLURM: ' +
+                                  self.currentlyProcessing.subjectPath)
+                            # Now launch a SLURM job to process this subject
+                            # In an ideal world, we'd like to be able to use "--cpus 8 --memory 8G", but that throws
+                            # an error on Sherlock.
+                            raw_command = 'singularity run --env PROCESS_SUBJECT_S3_PATH="' + \
+                                self.currentlyProcessing.subjectPath+'" '+self.singularity_image_path
+
+                            job_name: str = self.deployment
+                            if reprocessing_job:
+                                job_name += '_re'
+                            else:
+                                job_name += '_new'
+
+                            sbatch_command = 'sbatch -p owners --job-name ' + job_name + ' --cpus-per-task=8 --mem=8000M --time=4:00:00 --wrap="' + \
+                                raw_command.replace('"', '\\"')+'"'
+                            print('Running command: '+sbatch_command)
+                            try:
+                                subprocess.run(
+                                    sbatch_command, shell=True, check=True)
+                            except Exception as e:
+                                # If we fail to queue, then we need to mark the subject as not queued, so that we can try again later
+                                print('Failed to queue SLURM job: '+str(e))
+                                self.currentlyProcessing.markAsNotQueuedOnSlurm()
+                        else:
+                            print(
+                                'Not queueing subject for processing on SLURM, because the queue is too long. Waiting for some jobs to finish')
+                    else:
+                        # Launch the subject as a normal process on this local machine
+                        self.currentlyProcessing.process()
 
                     # This helps our status thread to keep track of what we're doing
                     self.currentlyProcessing = None
@@ -695,10 +806,28 @@ if __name__ == "__main__":
     parser.add_argument('--deployment', type=str,
                         default='DEV',
                         help='The deployment to target (must be DEV or PROD)')
+    parser.add_argument('--singularity_image_path', type=str,
+                        default='',
+                        help='If set, this assumes we are running as a SLURM job, and will process subjects by launching child SLURM jobs that use a singularity image to run the processing server.')
     args = parser.parse_args()
 
-    # 1. Launch a processing server
-    server = MocapServer(args.bucket, args.deployment)
+    subjectPath = os.getenv('PROCESS_SUBJECT_S3_PATH', '')
+    if len(subjectPath) > 0:
+        # If we're launched with PROCESS_SUBJECT_S3_PATH set, then we'll only process the subject we're given, and then immediately exit.
 
-    # 2. Run forever
-    server.processQueueForever()
+        # 1. Set up the connection to S3 and PubSub
+        index = ReactiveS3Index(args.bucket, args.deployment)
+        index.refreshIndex()
+        subject = SubjectToProcess(index, subjectPath)
+
+        # 2. Process the subject, and then exit
+        subject.process()
+    else:
+        # If PROCESS_SUBJECT_S3_PATH is not set, then launch the regular processing server
+
+        # 1. Launch a processing server
+        server = MocapServer(args.bucket, args.deployment,
+                             args.singularity_image_path)
+
+        # 2. Run forever
+        server.processQueueForever()
